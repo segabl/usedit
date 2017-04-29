@@ -10,10 +10,12 @@
 
 #include <string>
 
-using std::string;
-
 class Note {
   public:
+    Note* next;
+    Note* prev;
+    Note* line_start;
+    Note* line_end;
     enum Type {
       LINEBREAK = -1, DEFAULT, FREESTYLE, GOLD,
     };
@@ -21,8 +23,8 @@ class Note {
     int position;
     int length;
     int pitch;
-    string lyrics;
-    Note(Type type = DEFAULT, int position = 0, int length = 0, int pitch = 0, string lyrics = "");
+    std::string lyrics;
+    Note(Type type = DEFAULT, int position = 0, int length = 0, int pitch = 0, std::string lyrics = "");
     bool operator<(const Note& rhs) const;
 };
 

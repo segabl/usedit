@@ -9,9 +9,9 @@
 
 #include "StringUtils.h"
 #include "ResourceManager.h"
+#include "Utils.h"
 
 #include <cmath>
-#include <iostream>
 #include <fstream>
 #include <regex>
 
@@ -20,14 +20,20 @@ using audiere::OpenDevice;
 using audiere::OpenSampleSource;
 using audiere::SampleFormat;
 using audiere::SampleSourcePtr;
+using audiere::AudioDevicePtr;
+using audiere::OutputStreamPtr;
+using sf::Texture;
+using sf::Time;
 using sf::seconds;
-using std::cerr;
 using std::endl;
 using std::ifstream;
 using std::ofstream;
 using std::ios_base;
 using std::regex;
 using std::smatch;
+using std::list;
+using std::map;
+using std::string;
 
 AudioDevicePtr Song::audio_device(OpenDevice());
 
@@ -45,7 +51,7 @@ bool Song::loadFromFile(string fname) {
   ifstream file;
   file.open(fname, ios_base::in);
   if (!file.is_open()) {
-    cerr << "ERROR: Could not open \"" << fname << "\"!" << endl;
+    log(2, "Could not open \"" + fname + "\"!");
     return false;
   }
 
@@ -58,8 +64,8 @@ bool Song::loadFromFile(string fname) {
 
     if (regex_search(line, match, regex(R"(^#(.+?):(.+))", regex::icase))) {
       // Tags
-    if (regex_match(match.str(1), regex(R"(^BPM$)", regex::icase))) {
-      bpm = toType<float>(regex_replace(match.str(2), regex(R"(,)"), "."));
+    if (regex_match(match.str(1), regex(R"(^BPM$)", regex::icase)))
+{      bpm = toType<float>(regex_replace(match.str(2), regex(R"(,)"), "."));
     } else if (regex_match(match.str(1), regex(R"(^GAP$)", regex::icase))) {
       gap = toType<float>(regex_replace(match.str(2), regex(R"(,)"), "."));
     } else if (regex_match(match.str(1), regex(R"(^START$)", regex::icase))) {
@@ -70,29 +76,32 @@ bool Song::loadFromFile(string fname) {
   } else if (regex_search(line, match, regex(R"(^([:F\*]) (-?[0-9]+) ([0-9]+) (-?[0-9]+) (.*))", regex::icase))) {
       // Notes
       Note::Type t = match.str(1) == "F" ? Note::FREESTYLE : (match.str(1) == "*" ? Note::GOLD : Note::DEFAULT);
-      note_tracks[player].push_back(new Note(t, toType<int>(match.str(2)), toType<int>(match.str(3)), toType<int>(match.str(4)), match.str(5)));
+      note_tracks[player].add(new Note(t, toType<int>(match.str(2)), toType<int>(match.str(3)), toType<int>(match.str(4)), match.str(5)));
     } else if (regex_search(line, match, regex(R"(^- ([0-9]+)(?: ([0-9]+))?)", regex::icase))) {
-    // Linebreak
-    note_tracks[player].push_back(new Note(Note::LINEBREAK, toType<int>(match.str(1))));
+    // Line break
+    note_tracks[player].add(new Note(Note::LINEBREAK, toType<int>(match.str(1))));
   } else if (regex_search(line, match, regex(R"(^P([0-9]))", regex::icase))) {
         // Player switch
         player = toType<int>(match.str(1));
       } else if (regex_search(line, match, regex(R"(^E)", regex::icase))) {
     // End of file
+    for (auto track : note_tracks) {
+      track.second.calcLineEnds();
+    }
     file.close();
     break;
   } else {
     // Unrecognized line
-    cerr << "WARNING: Unrecognized line \"" << line << "\"!" << endl;
+    log(1, "Unrecognized line \"" + line + "\"!");
   }
     if (file.eof()) {
       file.close();
-      cerr << "ERROR: End of file reached without final \"E\" marker!" << endl;
+      log(2, "End of file reached without final \"E\" marker!");
       return false;
     }
   }
 
-  cerr << "INFO: Parsed file successfully" << endl;
+  log(0, "Song file parsed successfully");
 
   string soundfile = regex_replace(fname, regex(R"([^/\\]+$)"), tags["MP3"]);
   SampleSourcePtr source = OpenSampleSource(soundfile.c_str());
@@ -104,9 +113,9 @@ bool Song::loadFromFile(string fname) {
       stream = OpenSound(audio_device, source, true);
       setPosition(seconds(start));
     }
-    cerr << "INFO: mp3 loaded" << endl;
+    log(0, "Song audio file loaded");
   } else {
-    cerr << "ERROR: Could not open \"" << soundfile << "\"!" << endl;
+    log(2, "Could not open \"" + soundfile + "\"!");
     return false;
   }
 
@@ -121,7 +130,7 @@ bool Song::saveToFile(string fname) const {
   ofstream file;
   file.open(fname, ios_base::out);
   if (!file.is_open()) {
-    cerr << "ERROR: Could not open \"" << fname << "\"!" << endl;
+    log(2, "Could not open \"" + fname + "\"!");
     return false;
   }
   file << "#BPM:" << regex_replace(toString(bpm), regex(R"(\.)", regex::icase), ",") << endl;
@@ -138,7 +147,7 @@ bool Song::saveToFile(string fname) const {
     if (track.first != 0) {
       file << "P" << track.first << endl;
     }
-    for (auto note : track.second) {
+    for (Note* note = track.second.begin(); note; note = note->next) {
       if (note->type == Note::LINEBREAK) {
         file << "- " << note->position;
         if (note->length != 0) {
@@ -170,7 +179,7 @@ void Song::clear() {
   start = 0;
   tags.clear();
   for (auto track : note_tracks) {
-    for (auto note : track.second) {
+    for (Note* note = track.second.end(); note; note = note->prev) {
       delete note;
     }
   }
@@ -237,12 +246,12 @@ Time Song::length() const {
 void Song::fixPitches() {
   for (auto track : note_tracks) {
     float average = 0;
-    for (auto note : track.second) {
+    for (Note* note = track.second.begin(); note; note = note->next) {
       average += note->pitch;
     }
     average = (average / track.second.size()) / 12;
     if (abs(average) > 2) {
-      for (auto note : track.second) {
+      for (Note* note = track.second.begin(); note; note = note->next) {
         note->pitch += -round(average) * 12;
       }
     }
@@ -252,7 +261,7 @@ void Song::fixPitches() {
 void Song::multiplyBPM(float mult) {
   bpm *= mult;
   for (auto track : note_tracks) {
-    for (auto note : track.second) {
+    for (Note* note = track.second.begin(); note; note = note->next) {
       note->position *= mult;
       note->length *= mult;
     }

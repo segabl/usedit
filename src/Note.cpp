@@ -7,7 +7,9 @@
 
 #include "Note.h"
 
-Note::Note(Type type, int position, int length, int pitch, string lyrics) {
+using std::string;
+
+Note::Note(Type type, int position, int length, int pitch, string lyrics) : next(nullptr), prev(nullptr), line_start(nullptr), line_end(nullptr) {
   this->type = type;
   this->position = position;
   this->length = length;

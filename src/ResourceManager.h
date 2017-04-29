@@ -10,32 +10,22 @@
 
 #include <SFML/Graphics/Font.hpp>
 #include <SFML/Graphics/Texture.hpp>
-#include <SFML/Graphics/RenderTexture.hpp>
 
 #include <map>
 #include <string>
-
-using sf::Font;
-using sf::RenderTexture;
-using sf::Texture;
-
-using std::map;
-using std::string;
 
 class ResourceManager {
   private:
     ResourceManager();
     ResourceManager(ResourceManager&);
 
-    static map<string, Font> fonts;
-    static map<string, Texture> textures;
-    static map<string, RenderTexture> render_textures;
+    static std::map<std::string, sf::Font> fonts;
+    static std::map<std::string, sf::Texture> textures;
   public:
-    static bool initializeResources(string directory);
+    static bool initializeResources(std::string directory);
 
-    static Font& font(string name);
-    static Texture& texture(string name);
-    static RenderTexture& renderTexture(string name);
+    static sf::Font& font(std::string name);
+    static sf::Texture& texture(std::string name);
 };
 
 #endif /* SRC_RESOURCEMANAGER_H_ */

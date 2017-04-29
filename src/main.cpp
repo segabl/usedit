@@ -13,6 +13,7 @@
 #include <SFML/Graphics.hpp>
 
 #include <iostream>
+#include <cassert>
 #include <cmath>
 #include <regex>
 
@@ -20,8 +21,6 @@ using namespace std;
 using namespace sf;
 
 #define INTERFACE_HEIGHT 128
-
-NoteList::iterator findLineEnd(NoteList& l, NoteList::iterator it);
 
 Color colorByTrack(int tracknumber);
 
@@ -44,10 +43,7 @@ int main(int argc, char* argv[]) {
   ToneGenerator tone_generator(0);
 
   NoteListMap::iterator track;
-  NoteList::iterator it_current;
-  NoteList::iterator it_next;
-  NoteList::iterator it_line_start;
-  NoteList::iterator it_line_end;
+  Note* current_note = nullptr;
 
   Vector2f scale(24, 24);
   Vector2f scroll_pos(0, 0);
@@ -63,13 +59,10 @@ int main(int argc, char* argv[]) {
     cout << song.note_tracks.size() << " lyric track/s" << endl << endl;
 
     track = prev(song.note_tracks.end());
-    it_current = track->second.end();
-    it_next = track->second.begin();
-    it_line_start = it_next;
-    it_line_end = findLineEnd(track->second, it_line_start);
+    current_note = track->second.begin();
 
-    scroll_pos.x = (*it_next)->position - 4;
-    scroll_pos.y = (*it_next)->pitch;
+    scroll_pos.x = current_note->position - 4;
+    scroll_pos.y = current_note->pitch;
     scroll_to = scroll_pos;
     song_pos = -1000;
 
@@ -87,7 +80,7 @@ int main(int argc, char* argv[]) {
       switch (e.type) {
         case Event::Closed:
           win.close();
-          break;
+          return 0;
         case Event::Resized: {
           render_size = Vector2f(e.size.width, e.size.height - INTERFACE_HEIGHT);
           tex_render.create(render_size.x, render_size.y);
@@ -129,49 +122,33 @@ int main(int argc, char* argv[]) {
 
     if (song_loaded) {
 
-      tone_generator.setVolume(1 * song.isPlaying());
-
       song_pos = (song.bpm / 60.f) * (song.getPosition().asSeconds() - song.gap / 1000.f) * 4.f;
 
-      if (it_next != track->second.end() && song_pos >= (*it_next)->position && it_next != it_current) {
-        it_current = it_next;
-        if ((*it_next)->type == Note::LINEBREAK) {
-          it_line_start = next(it_next);
-          it_line_end = findLineEnd(track->second, it_line_start);
-        } else {
-          // Play tone
-          if ((*it_next)->type != Note::FREESTYLE) {
-            tone_generator.startTone((*it_next)->pitch);
-          }
-        }
-        it_next++;
+      if (current_note->next && song_pos > current_note->position + current_note->length) {
+        current_note = current_note->next;
       }
-      // Stop any previous tones if we passed the note end
-      if (it_current != track->second.end() && song_pos > (*it_current)->position + (*it_current)->length) {
-        tone_generator.stopTone();
-      }
+
+      assert(current_note);
+      assert(current_note->line_start);
+      assert(current_note->line_end);
 
       Color track_color = colorByTrack(track->first);
 
-      Note* note_current = it_current != track->second.end() ? *it_current : nullptr;
-      Note* note_next = it_next != track->second.end() ? *it_next : nullptr;
-      Note* note_line_start = it_line_start != track->second.end() ? *it_line_start : nullptr;
-      Note* note_line_end = it_line_end != track->second.end() ? *it_line_end : nullptr;
       if ((song_pos - scroll_to.x) * scale.x > render_size.x - 4 * scale.x
-          && (note_next || (note_current && (note_current->position + note_current->length - 4 - scroll_to.x) * scale.x > render_size.x))) {
-        if (note_line_start && (song_pos - note_line_start->position - 4) * scale.x <= render_size.x / 2.f) {
-          scroll_to.x = note_line_start->position - 4;
+          && (current_note->next || (current_note->position + current_note->length - 4 - scroll_to.x) * scale.x > render_size.x)) {
+        if ((song_pos - current_note->line_start->position - 4) * scale.x <= render_size.x / 2.f) {
+          scroll_to.x = current_note->line_start->position - 4;
         } else {
           scroll_to.x = floor(song_pos) - 4;
         }
       }
-      if (note_current && note_next && note_current->type == Note::LINEBREAK && (note_next->position - scroll_to.x) * scale.x > render_size.x) {
-        scroll_to.x = note_next->position - 4;
+      if (current_note->next && current_note->type == Note::LINEBREAK && (current_note->next->position - scroll_to.x) * scale.x > render_size.x) {
+        scroll_to.x = current_note->next->position - 4;
       }
-      if (note_current && note_current->type != Note::LINEBREAK && abs(note_current->pitch + scroll_to.y) * scale.y * 0.5f > render_size.y) {
-        scroll_to.y = note_current->pitch;
+      if (current_note->type != Note::LINEBREAK && abs(current_note->pitch + scroll_to.y) * scale.y * 0.5f > render_size.y) {
+        scroll_to.y = current_note->pitch;
       }
-      scroll_to.x = min(scroll_to.x, (*prev(track->second.end()))->position + (*prev(track->second.end()))->length + 4.f);
+      scroll_to.x = min(scroll_to.x, track->second.end()->position + track->second.end()->length + 4.f);
       scroll_pos.x += (scroll_to.x - scroll_pos.x) * delta * song.bpm * scale.x * 0.001;
       scroll_pos.y += (scroll_to.y - scroll_pos.y) * delta * song.bpm * scale.y * 0.001;
 
@@ -195,10 +172,8 @@ int main(int argc, char* argv[]) {
         tex_render.draw(rectangle);
       }
 
-      Note* note = nullptr;
       string lyrics;
-      for (auto it = track->second.begin(); it != track->second.end(); it = next(it)) {
-        note = (*it);
+      for (Note* note = track->second.begin(); note; note = note->next) {
         if ((note->position + note->length - scroll_pos.x) * scale.x < 0) {
           continue;
         }
@@ -225,8 +200,7 @@ int main(int argc, char* argv[]) {
       float width = 0;
       list<Text> lyric_list;
       Text t("", ResourceManager::font("lyrics"), 32);
-      for (auto it = it_line_start; it != it_line_end; it = next(it)) {
-        note = (*it);
+      for (Note* note = current_note->line_start; note && note->type != Note::LINEBREAK; note = note->next) {
         t.setString(note->lyrics);
         t.setPosition(width, render_size.y - 32 - 16);
         Color c = note->type != Note::GOLD ? Color(255, 255, 255, 100 + 155 * (note->type != Note::FREESTYLE)) : Color(255, 255, 100);
@@ -277,13 +251,6 @@ int main(int argc, char* argv[]) {
     win.display();
   }
   return 0;
-}
-
-NoteList::iterator findLineEnd(NoteList& l, NoteList::iterator it) {
-  while (it != l.end() && (*it)->type != Note::LINEBREAK) {
-    it++;
-  }
-  return it;
 }
 
 Color colorByTrack(int tracknumber) {

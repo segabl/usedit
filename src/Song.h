@@ -8,7 +8,7 @@
 #ifndef SRC_SONG_H_
 #define SRC_SONG_H_
 
-#include "Note.h"
+#include "NoteList.h"
 
 #include <audiere.h>
 
@@ -17,37 +17,27 @@
 
 #include <map>
 #include <list>
-#include <string>
 
-using audiere::AudioDevicePtr;
-using audiere::OutputStreamPtr;
-using sf::Texture;
-using sf::Time;
-using std::list;
-using std::map;
-using std::string;
-
-typedef map<string, string> StringMap;
-typedef list<Note*> NoteList;
-typedef map<int, NoteList> NoteListMap;
+typedef std::map<std::string, std::string> StringMap;
+typedef std::map<int, NoteList> NoteListMap;
 
 class Song {
   private:
-    static AudioDevicePtr audio_device;
+    static audiere::AudioDevicePtr audio_device;
     int sample_rate;
-    OutputStreamPtr stream;
+    audiere::OutputStreamPtr stream;
     bool paused;
   public:
     float bpm;
     float gap;
     float start;
-    Texture cover;
+    sf::Texture cover;
     StringMap tags;
     NoteListMap note_tracks;
     Song();
     ~Song();
-    bool loadFromFile(string fname);
-    bool saveToFile(string fname) const;
+    bool loadFromFile(std::string fname);
+    bool saveToFile(std::string fname) const;
     void clear();
 
     void play();
@@ -58,9 +48,9 @@ class Song {
     bool isPaused() const;
     bool isStopped() const;
 
-    void setPosition(Time time);
-    Time getPosition() const;
-    Time length() const;
+    void setPosition(sf::Time time);
+    sf::Time getPosition() const;
+    sf::Time length() const;
 
     void fixPitches();
     void multiplyBPM(float mult);
