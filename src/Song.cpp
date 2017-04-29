@@ -7,9 +7,8 @@
 
 #include "Song.h"
 
-#include "StringUtils.h"
-#include "ResourceManager.h"
 #include "Utils.h"
+#include "ResourceManager.h"
 
 #include <cmath>
 #include <fstream>
@@ -102,6 +101,7 @@ bool Song::loadFromFile(string fname) {
   }
 
   log(0, "Song file parsed successfully");
+  log(0, tags["ARTIST"] + " - " + tags["TITLE"] +", BPM: " + toString(bpm) + ", GAP: " + toString(gap));
 
   string soundfile = regex_replace(fname, regex(R"([^/\\]+$)"), tags["MP3"]);
   SampleSourcePtr source = OpenSampleSource(soundfile.c_str());
@@ -179,8 +179,8 @@ void Song::clear() {
   start = 0;
   tags.clear();
   for (auto track : note_tracks) {
-    for (Note* note = track.second.end(); note; note = note->prev) {
-      delete note;
+    for (Note* note = track.second.end()->prev; note; note = note->prev) {
+      delete note->next;
     }
   }
   note_tracks.clear();

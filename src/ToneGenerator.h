@@ -24,12 +24,15 @@ class ToneGenerator {
     static AudioDevicePtr audio_device;
     SampleSourcePtrMap tone_map;
     OutputStreamPtr stream;
+    int type;
+    float volume;
   public:
     ToneGenerator(int type = 0);
     void setVolume(float volume);
     float getVolume() const;
-    void startTone(int pitch);
-    void stopTone();
+    void play(int pitch);
+    void stop();
+    bool isPlaying() const;
 };
 
 #endif /* TONEGENERATOR_H_ */
