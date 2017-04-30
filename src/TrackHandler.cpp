@@ -59,8 +59,8 @@ void drawNote(RenderTarget& rt, Note* note, Vector2f scale, Color blend) {
 }
 
 TrackHandler::TrackHandler(Song* song, int track_number, Vector2f size) :
-    song(song), track_number(track_number), tone_generator(abs(track_number % 2)), view(FloatRect(0, 0, size.x, size.y)), notes(song->note_tracks[track_number]), current_note(
-        notes.begin()), scroll_pos(current_note->position - 8, current_note->pitch), scroll_to(scroll_pos) {
+    song(song), track_number(track_number), tone_generator(abs(track_number % 2)), view(FloatRect(0, 0, size.x, size.y)), notes(song->note_tracks[track_number]),
+    current_note(notes.begin()), scroll_pos(current_note->position - 4, current_note->pitch), scroll_to(scroll_pos) {
   texture.create(size.x, size.y);
   log(0, "Track handler " + toString(track_number) + " created");
 }
@@ -74,20 +74,15 @@ void TrackHandler::resize(Vector2f size) {
   view.setSize(size.x, size.y);
 }
 
-void TrackHandler::update(float delta, Vector2f scale) {
+void TrackHandler::update(float delta, Vector2f scale, Vector2i mouse_pos, bool allow_input) {
   texture.clear(Color(20, 20, 20));
   RectangleShape rectangle;
 
-  float song_pos = (song->bpm / 60.f) * (song->getPosition().asSeconds() - song->gap / 1000.f) * 4.f;
+  float song_pos = SECONDS_TO_BEATS(song->getPosition().asSeconds() - song->gap / 1000.f, song->bpm);
 
-  if (song_pos >= current_note->position && song_pos < current_note->position + current_note->length && current_note->type != Note::FREESTYLE
-      && current_note->type != Note::LINEBREAK) {
-    if (!tone_generator.isPlaying()) {
-      tone_generator.play(current_note->pitch);
-    }
-    tone_generator.setVolume(song->isPlaying());
-  } else {
-    tone_generator.stop();
+  if (song_pos >= current_note->position && song_pos < current_note->position + current_note->length
+      && current_note->type != Note::FREESTYLE && current_note->type != Note::LINEBREAK) {
+      tone_generator.play(current_note->pitch, seconds(BEATS_TO_SECONDS(current_note->length - song_pos + current_note->position, song->bpm));
   }
 
   if (current_note->next && song_pos > current_note->position + current_note->length) {

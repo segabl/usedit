@@ -9,30 +9,32 @@
 #define TONEGENERATOR_H_
 
 #include <audiere.h>
-
+#include <SFML/System/Clock.hpp>
+#include <SFML/System/Time.hpp>
 #include <map>
+#include <thread>
+#include <mutex>
+#include <queue>
+#include <tuple>
 
-using audiere::AudioDevicePtr;
-using audiere::OutputStreamPtr;
-using audiere::SampleSourcePtr;
-using std::map;
-
-typedef map<int, SampleSourcePtr> SampleSourcePtrMap;
+typedef std::map<int, audiere::OutputStreamPtr> OutputStreamPtrMap;
 
 class ToneGenerator {
   private:
-    static AudioDevicePtr audio_device;
-    SampleSourcePtrMap tone_map;
-    OutputStreamPtr stream;
+    static audiere::AudioDevicePtr audio_device;
+    OutputStreamPtrMap tone_map;
     int type;
     float volume;
+    bool alive;
+    std::thread play_thread;
+    std::queue<std::tuple<int, sf::Time>> queue;
+    std::mutex mtx;
+    void work();
   public:
     ToneGenerator(int type = 0);
+    ~ToneGenerator();
     void setVolume(float volume);
-    float getVolume() const;
-    void play(int pitch);
-    void stop();
-    bool isPlaying() const;
+    void play(int pitch, sf::Time time = sf::Time::Zero);
 };
 
 #endif /* TONEGENERATOR_H_ */

@@ -10,37 +10,36 @@
 
 #include <SFML/Graphics/Drawable.hpp>
 #include <SFML/Graphics/RenderStates.hpp>
+#include <SFML/Graphics/RenderTarget.hpp>
+#include <SFML/Graphics/Transformable.hpp>
 #include <SFML/System/Vector2.hpp>
 #include <functional>
 
 namespace gui {
 
-  class Element: public sf::Drawable {
+  class Element: public sf::Transformable, public sf::Drawable {
     protected:
       static Element* focus;
       static Element* hover;
-      sf::Vector2f position;
+      bool enabled;
       sf::Vector2f size;
-      sf::Vector2f origin;
-      std::function<void()> callback;
+      std::function<void(Element*)> callback;
       Element();
-      bool isFocused() const;
-      bool isHovered() const;
     public:
-      std::function<void()> getCallback() const;
-      void setCallback(std::function<void()> callback);
+      static Element* focusedElement();
 
-      sf::Vector2f getPosition() const;
-      void setPosition(sf::Vector2f position);
-      void setPosition(float x, float y);
+      bool isHovered() const;
+      bool isFocused() const;
 
-      sf::Vector2f getSize() const;
-      void setSize(sf::Vector2f size);
-      void setSize(float x, float y);
+      bool isEnabled() const;
+      void setEnabled(bool enabled);
 
-      sf::Vector2f getOrigin() const;
-      void setOrigin(sf::Vector2f origin);
-      void setOrigin(float x, float y);
+      virtual std::function<void(Element*)> getCallback() const;
+      virtual void setCallback(std::function<void(Element*)> callback);
+
+      virtual sf::Vector2f getSize() const;
+      virtual void setSize(sf::Vector2f size);
+      virtual void setSize(float x, float y);
 
       virtual void update(sf::Vector2i mouse_pos);
       virtual void draw(sf::RenderTarget& rt, sf::RenderStates rs) const;

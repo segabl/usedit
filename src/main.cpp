@@ -9,6 +9,8 @@
 #include "Song.h"
 #include "ToneGenerator.h"
 #include "TrackHandler.h"
+#include "Utils.h"
+#include "gui/Button.h"
 
 #include <SFML/Graphics.hpp>
 
@@ -17,13 +19,17 @@
 #include <cassert>
 #include <cmath>
 #include <regex>
+#include <vector>
 
 using namespace std;
 using namespace sf;
+using namespace gui;
 
 #define INTERFACE_HEIGHT 128
+#define STATUS_HEIGHT 32
 
 typedef unique_ptr<TrackHandler> TrackHandlerPtr;
+typedef unique_ptr<Button> ButtonPtr;
 
 int main(int argc, char* argv[]) {
   ResourceManager::initializeResources(regex_replace(argv[0], regex(R"([^/\\]+$)"), ""));
@@ -32,25 +38,46 @@ int main(int argc, char* argv[]) {
   win.setFramerateLimit(0);
   win.setVerticalSyncEnabled(false);
 
-  Vector2f render_size(win.getSize().x, (win.getSize().y - INTERFACE_HEIGHT));
+  Vector2f render_size(win.getSize().x, (win.getSize().y - INTERFACE_HEIGHT - STATUS_HEIGHT));
 
   Song song;
+  bool song_loaded = false;
   ToneGenerator tone_generator(0);
 
   map<int, TrackHandlerPtr> track_handlers;
 
   float scale = 1;
 
-  bool song_loaded = argc > 1 ? song.loadFromFile(argv[1 + rand() % (argc - 1)]) : false;
-  if (song_loaded) {
-    song.fixPitches();
+  vector<Button*> buttons;
+  Button button_load(Text("Load", ResourceManager::font("default"), STATUS_HEIGHT - 8), Vector2f(160, STATUS_HEIGHT));
+  buttons.push_back(&button_load);
+  Button button_save(Text("Save", ResourceManager::font("default"), STATUS_HEIGHT - 8), Vector2f(160, STATUS_HEIGHT));
+  buttons.push_back(&button_save);
 
-    render_size = Vector2f(win.getSize().x, (win.getSize().y - INTERFACE_HEIGHT) / song.note_tracks.size());
-    for (auto track : song.note_tracks) {
-      track_handlers[track.first].reset(new TrackHandler(&song, track.first, render_size));
+  function<void(string)> loadSong = [&](string fname) {
+    song_loaded = song.loadFromFile(fname);
+    if (song_loaded) {
+      song.fixPitches();
+
+      render_size = Vector2f(win.getSize().x, (win.getSize().y - INTERFACE_HEIGHT - STATUS_HEIGHT) / song.note_tracks.size());
+      for (auto track : song.note_tracks) {
+        track_handlers[track.first].reset(new TrackHandler(&song, track.first, render_size));
+      }
+
+      song.play();
     }
+    button_save.setEnabled(song_loaded);
+  };
 
-    song.play();
+  button_load.setCallback([&](Element*) {
+    string fname = getOpenFile("Select a file");
+    if (fname != "") {
+      loadSong(fname);
+    }
+  });
+
+  if (argc > 1) {
+    loadSong(argv[1]);
   }
 
   Clock c;
@@ -58,12 +85,15 @@ int main(int argc, char* argv[]) {
   while (win.isOpen()) {
     delta = c.restart().asSeconds();
 
+    Vector2i mouse_pos = Mouse::getPosition(win);
+    Vector2f scale_vec((64 / (song.bpm / 60.f)) * scale, 64 * scale * 0.25);
+
     win.clear(Color(40, 40, 40));
 
     if (song_loaded) {
       float offset = 0;
       for (auto track : song.note_tracks) {
-        track_handlers[track.first]->update(delta, Vector2f((64 / (song.bpm / 60.f)) * scale, 64 * scale * 0.25));
+        track_handlers[track.first]->update(delta, scale_vec, Vector2i(mouse_pos.x, mouse_pos.y - INTERFACE_HEIGHT - offset), !gui::Element::focusedElement());
         Sprite s(track_handlers[track.first]->getTexture());
         s.setPosition(0, INTERFACE_HEIGHT + offset);
         win.draw(s);
@@ -95,6 +125,36 @@ int main(int argc, char* argv[]) {
     t.setPosition(8 + INTERFACE_HEIGHT, INTERFACE_HEIGHT * 0.5 + 8);
     win.draw(t);
 
+    t.setString(toString(song.bpm));
+    t.setCharacterSize(24);
+    t.setPosition(win.getSize().x - t.getLocalBounds().width - 16, INTERFACE_HEIGHT / 2 - 24 - 4);
+    win.draw(t);
+
+    t.setString(toString(song.gap));
+    t.setPosition(win.getSize().x - t.getLocalBounds().width - 16, INTERFACE_HEIGHT / 2 + 18 + 4);
+    win.draw(t);
+
+    t.setString("bpm");
+    t.setCharacterSize(18);
+    t.setPosition(win.getSize().x - t.getLocalBounds().width - 16, INTERFACE_HEIGHT / 2 - 24 - 18 - 4);
+    win.draw(t);
+
+    t.setString("gap");
+    t.setPosition(win.getSize().x - t.getLocalBounds().width - 16, INTERFACE_HEIGHT / 2 + 4);
+    win.draw(t);
+
+    r.setSize(Vector2f(win.getSize().x, 1));
+    r.setTexture(nullptr);
+    r.setPosition(0, win.getSize().y - STATUS_HEIGHT - 1);
+    win.draw(r);
+
+    for (size_t i = 0; i < buttons.size(); i++) {
+      buttons[i]->setPosition(win.getSize().x / max((size_t) 8, buttons.size()) * i, win.getSize().y - STATUS_HEIGHT);
+      buttons[i]->setSize(win.getSize().x / max((size_t) 8, buttons.size()), STATUS_HEIGHT);
+      buttons[i]->update(mouse_pos);
+      win.draw(*buttons[i]);
+    }
+
     win.display();
 
     // Event Logic
@@ -105,7 +165,7 @@ int main(int argc, char* argv[]) {
           win.close();
           break;
         case Event::Resized: {
-          render_size = Vector2f(e.size.width, (e.size.height - INTERFACE_HEIGHT) / song.note_tracks.size());
+          render_size = Vector2f(e.size.width, (e.size.height - INTERFACE_HEIGHT - STATUS_HEIGHT) / song.note_tracks.size());
           for (auto track : song.note_tracks) {
             track_handlers[track.first]->resize(render_size);
           }
@@ -129,6 +189,9 @@ int main(int argc, char* argv[]) {
                   song.play();
                 }
               }
+              break;
+            case Keyboard::L:
+              song.changeNoteLengths(2);
               break;
             default:
               break;

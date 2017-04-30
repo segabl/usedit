@@ -28,6 +28,7 @@ class Song {
     audiere::OutputStreamPtr stream;
     bool paused;
   public:
+    std::string fname;
     float bpm;
     float gap;
     float start;
@@ -54,6 +55,7 @@ class Song {
 
     void fixPitches();
     void multiplyBPM(float mult);
+    void changeNoteLengths(int amount);
 };
 
 #endif /* SRC_SONG_H_ */

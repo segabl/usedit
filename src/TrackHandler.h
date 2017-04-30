@@ -34,7 +34,7 @@ class TrackHandler {
     ~TrackHandler();
 
     void resize(sf::Vector2f size);
-    void update(float delta, sf::Vector2f scale);
+    void update(float delta, sf::Vector2f scale, sf::Vector2i mouse_pos, bool allow_input);
 
     const sf::Texture& getTexture() const;
 };

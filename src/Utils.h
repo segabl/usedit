@@ -12,7 +12,11 @@
 #include <string>
 #include <vector>
 
+#define BEATS_TO_SECONDS(BEATS, BPM) ((BEATS) / ((BPM) / 60.f) / 4.f))
+#define SECONDS_TO_BEATS(SECONDS, BPM) (((BPM) / 60.f) * (SECONDS) * 4.f)
+
 void log(int level, std::string message);
+std::string getOpenFile(std::string title);
 
 std::vector<std::string> explode(std::string data, std::string delimiter);
 std::string implode(std::vector<std::string> data, std::string delimiter);

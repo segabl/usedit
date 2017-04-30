@@ -33,6 +33,8 @@ using std::smatch;
 using std::list;
 using std::map;
 using std::string;
+using std::max;
+using std::min;
 
 AudioDevicePtr Song::audio_device(OpenDevice());
 
@@ -101,7 +103,7 @@ bool Song::loadFromFile(string fname) {
   }
 
   log(0, "Song file parsed successfully");
-  log(0, tags["ARTIST"] + " - " + tags["TITLE"] +", BPM: " + toString(bpm) + ", GAP: " + toString(gap));
+  log(0, tags["ARTIST"] + " - " + tags["TITLE"] + ", BPM: " + toString(bpm) + ", GAP: " + toString(gap));
 
   string soundfile = regex_replace(fname, regex(R"([^/\\]+$)"), tags["MP3"]);
   SampleSourcePtr source = OpenSampleSource(soundfile.c_str());
@@ -120,9 +122,12 @@ bool Song::loadFromFile(string fname) {
   }
 
   if (tags["COVER"] != "") {
-    cover.loadFromFile(regex_replace(fname, regex(R"([^/\\]+$)"), tags["COVER"]));
+    string coverfile = regex_replace(fname, regex(R"([^/\\]+$)"), tags["COVER"]);
+    if (!cover.loadFromFile(coverfile)) {
+      log(2, "Could not open \"" + coverfile + "\"!");
+    }
   }
-
+  this->fname == fname;
   return true;
 }
 
@@ -170,6 +175,7 @@ bool Song::saveToFile(string fname) const {
 
 void Song::clear() {
   stop();
+  fname = "";
   sample_rate = 44100;
   stream = nullptr;
   paused = false;
@@ -264,6 +270,18 @@ void Song::multiplyBPM(float mult) {
     for (Note* note = track.second.begin(); note; note = note->next) {
       note->position *= mult;
       note->length *= mult;
+    }
+  }
+}
+
+void Song::changeNoteLengths(int amount) {
+  for (auto track : note_tracks) {
+    for (Note* note = track.second.begin(); note; note = note->next) {
+      if (note->type == Note::LINEBREAK) {
+        continue;
+      }
+      int max_inc = note->next ? note->next->position - note->position - note->length : amount;
+      note->length += min(max_inc ,max(1 - note->length, amount));
     }
   }
 }
