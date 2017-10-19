@@ -9,14 +9,16 @@
 
 #include "Utils.h"
 
+using sf::Color;
 using sf::Font;
 using sf::RenderTexture;
 using sf::Texture;
-using std::map;
+using std::unordered_map;
 using std::string;
 
-map<string, Font> ResourceManager::fonts;
-map<string, Texture> ResourceManager::textures;
+unordered_map<string, Font> ResourceManager::fonts;
+unordered_map<string, Texture> ResourceManager::textures;
+unordered_map<string, Color> ResourceManager::colors;
 
 bool ResourceManager::initializeResources(string directory) {
 
@@ -25,6 +27,10 @@ bool ResourceManager::initializeResources(string directory) {
 
   fonts["lyrics"].loadFromFile(directory + "data/lyrics.ttf");
   fonts["default"].loadFromFile(directory + "data/default.ttf");
+
+  colors["background"] = Color(20, 20, 20);
+  colors["interface"] = Color(90, 90, 90);
+  colors["text"] = Color(255, 255, 255);
 
   return true;
 }
@@ -41,4 +47,11 @@ Texture& ResourceManager::texture(string name) {
     log(1, "Texture resource \"" + name + "\" does not exist and has been created!");
   }
   return textures[name];
+}
+
+Color& ResourceManager::color(string name) {
+  if (colors.find(name) == colors.end()) {
+    log(1, "Color resource \"" + name + "\" does not exist and has been created!");
+  }
+  return colors[name];
 }
