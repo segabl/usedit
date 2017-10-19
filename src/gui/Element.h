@@ -21,6 +21,7 @@ namespace gui {
     protected:
       static Element* focus;
       static Element* hover;
+      bool mouse_pressed;
       bool enabled;
       sf::Vector2f size;
       std::function<void(Element*)> callback;

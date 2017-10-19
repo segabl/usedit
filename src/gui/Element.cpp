@@ -17,7 +17,7 @@ gui::Element* gui::Element::focusedElement() {
 }
 
 gui::Element::Element() :
-    enabled(true), size(0, 0), callback(nullptr) {
+    mouse_pressed(false), enabled(true), size(0, 0), callback(nullptr) {
 }
 
 bool gui::Element::isHovered() const {
@@ -60,21 +60,25 @@ void gui::Element::update(sf::Vector2i mouse_pos) {
   if (!enabled) {
     return;
   }
-  if (mouse_pos.x > getPosition().x - getOrigin().x && mouse_pos.x < getPosition().x - getOrigin().x + size.x && mouse_pos.y > getPosition().y - getOrigin().y
-      && mouse_pos.y < getPosition().y - getOrigin().y + size.y) {
+  bool pressed = sf::Mouse::isButtonPressed(sf::Mouse::Left) != mouse_pressed && sf::Mouse::isButtonPressed(sf::Mouse::Left);
+  bool released = sf::Mouse::isButtonPressed(sf::Mouse::Left) != mouse_pressed && !sf::Mouse::isButtonPressed(sf::Mouse::Left);
+  mouse_pressed = sf::Mouse::isButtonPressed(sf::Mouse::Left);
+
+  sf::FloatRect rect(getPosition().x - getOrigin().x, getPosition().y - getOrigin().y, getSize().x, getSize().y);
+  if (rect.contains(mouse_pos.x, mouse_pos.y)) {
     if (!hover) {
       hover = this;
     }
-    if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && !focus) {
+    if (pressed && !focus) {
       focus = this;
     }
-    if (!sf::Mouse::isButtonPressed(sf::Mouse::Left) && focus == this && callback) {
+    if (released && focus == this && callback) {
       callback(this);
     }
   } else if (hover) {
     hover = nullptr;
   }
-  if (!sf::Mouse::isButtonPressed(sf::Mouse::Left) && focus == this) {
+  if (!mouse_pressed && focus == this) {
     focus = nullptr;
   }
 }
