@@ -10,7 +10,7 @@
 #include "ToneGenerator.h"
 #include "TrackHandler.h"
 #include "Utils.h"
-#include "gui/Button.h"
+#include "gui/DropdownList.h"
 
 #include <SFML/Graphics.hpp>
 
@@ -27,6 +27,7 @@ using namespace gui;
 
 #define INTERFACE_HEIGHT 128
 #define STATUS_HEIGHT 32
+#define SEEK_HEIGHT 8
 
 typedef unique_ptr<TrackHandler> TrackHandlerPtr;
 typedef unique_ptr<Button> ButtonPtr;
@@ -48,18 +49,22 @@ int main(int argc, char* argv[]) {
 
   float scale = 1;
 
-  vector<Button*> buttons;
-  Button button_load(Text("Load", ResourceManager::font("default"), STATUS_HEIGHT - 8), Vector2f(160, STATUS_HEIGHT));
-  buttons.push_back(&button_load);
+  vector<Element*> bottom_elements;
+
+  DropdownList list_file(Text("File", ResourceManager::font("default"), STATUS_HEIGHT - 8), Vector2f(160, STATUS_HEIGHT), DropdownList::UP);
+  bottom_elements.push_back(&list_file);
+
+  Button button_load(Text("Open", ResourceManager::font("default"), STATUS_HEIGHT - 8), Vector2f(160, STATUS_HEIGHT));
   Button button_save(Text("Save", ResourceManager::font("default"), STATUS_HEIGHT - 8), Vector2f(160, STATUS_HEIGHT));
-  buttons.push_back(&button_save);
+  list_file.addElement(&button_save);
+  list_file.addElement(&button_load);
 
   function<void(string)> loadSong = [&](string fname) {
     song_loaded = song.loadFromFile(fname);
     if (song_loaded) {
       song.fixPitches();
 
-      render_size = Vector2f(win.getSize().x, (win.getSize().y - INTERFACE_HEIGHT - STATUS_HEIGHT) / song.note_tracks.size());
+      render_size = Vector2f(win.getSize().x, (win.getSize().y - INTERFACE_HEIGHT - SEEK_HEIGHT - STATUS_HEIGHT) / song.note_tracks.size());
       for (auto track : song.note_tracks) {
         track_handlers[track.first].reset(new TrackHandler(&song, track.first, render_size));
       }
@@ -88,26 +93,39 @@ int main(int argc, char* argv[]) {
     Vector2i mouse_pos = Mouse::getPosition(win);
     Vector2f scale_vec((64 / (song.bpm / 60.f)) * scale, 64 * scale * 0.25);
 
-    win.clear(Color(40, 40, 40));
+    win.clear(ResourceManager::color("background"));
 
     if (song_loaded) {
       float offset = 0;
+      RectangleShape r(Vector2f(win.getSize().x, 2));
+      r.setFillColor(ResourceManager::color("interface"));
       for (auto track : song.note_tracks) {
         track_handlers[track.first]->update(delta, scale_vec, Vector2i(mouse_pos.x, mouse_pos.y - INTERFACE_HEIGHT - offset), !gui::Element::focusedElement());
         Sprite s(track_handlers[track.first]->getTexture());
         s.setPosition(0, INTERFACE_HEIGHT + offset);
         win.draw(s);
-        RectangleShape r(Vector2f(win.getSize().x, 1));
-        r.setPosition(0, INTERFACE_HEIGHT + offset);
-        win.draw(r);
+        if (offset) {
+          r.setPosition(0, INTERFACE_HEIGHT + offset - 1);
+          win.draw(r);
+        }
         offset += render_size.y;
       }
+
+      r.setSize(Vector2f(win.getSize().x * (song.getPosition() / song.length()), SEEK_HEIGHT));
+      r.setFillColor(ResourceManager::color("text"));
+      r.setOutlineThickness(0);
+      r.setPosition(0, win.getSize().y - STATUS_HEIGHT - SEEK_HEIGHT);
+      win.draw(r);
     }
 
     RectangleShape r(Vector2f(win.getSize().x, INTERFACE_HEIGHT));
-    r.setFillColor(Color(40, 40, 40));
-    r.setOutlineThickness(1);
+    r.setFillColor(ResourceManager::color("interface"));
+    r.setOutlineThickness(0);
     r.setPosition(0, 0);
+    win.draw(r);
+
+    r.setSize(Vector2f(win.getSize().x, STATUS_HEIGHT));
+    r.setPosition(0, win.getSize().y - STATUS_HEIGHT);
     win.draw(r);
 
     r.setSize(Vector2f(INTERFACE_HEIGHT - 16, INTERFACE_HEIGHT - 16));
@@ -117,7 +135,7 @@ int main(int argc, char* argv[]) {
     r.setOutlineThickness(0);
     win.draw(r);
 
-    Text t(song.tags["ARTIST"], ResourceManager::font("default"), 32);
+    Text t(song_loaded ? song.tags["ARTIST"] : "No song loaded", ResourceManager::font("default"), 32);
     t.setPosition(8 + INTERFACE_HEIGHT, INTERFACE_HEIGHT * 0.5 - 32 - 8);
     win.draw(t);
     t.setString(song.tags["TITLE"]);
@@ -143,16 +161,11 @@ int main(int argc, char* argv[]) {
     t.setPosition(win.getSize().x - t.getLocalBounds().width - 16, INTERFACE_HEIGHT / 2 + 4);
     win.draw(t);
 
-    r.setSize(Vector2f(win.getSize().x, 1));
-    r.setTexture(nullptr);
-    r.setPosition(0, win.getSize().y - STATUS_HEIGHT - 1);
-    win.draw(r);
-
-    for (size_t i = 0; i < buttons.size(); i++) {
-      buttons[i]->setPosition(win.getSize().x / max((size_t) 8, buttons.size()) * i, win.getSize().y - STATUS_HEIGHT);
-      buttons[i]->setSize(win.getSize().x / max((size_t) 8, buttons.size()), STATUS_HEIGHT);
-      buttons[i]->update(mouse_pos);
-      win.draw(*buttons[i]);
+    for (size_t i = 0; i < bottom_elements.size(); i++) {
+      bottom_elements[i]->setPosition(win.getSize().x / max((size_t) 8, bottom_elements.size()) * i, win.getSize().y - STATUS_HEIGHT);
+      bottom_elements[i]->setSize(win.getSize().x / max((size_t) 8, bottom_elements.size()), STATUS_HEIGHT);
+      bottom_elements[i]->update(mouse_pos);
+      win.draw(*bottom_elements[i]);
     }
 
     win.display();
@@ -165,7 +178,7 @@ int main(int argc, char* argv[]) {
           win.close();
           break;
         case Event::Resized: {
-          render_size = Vector2f(e.size.width, (e.size.height - INTERFACE_HEIGHT - STATUS_HEIGHT) / song.note_tracks.size());
+          render_size = Vector2f(e.size.width, (e.size.height - INTERFACE_HEIGHT - SEEK_HEIGHT - STATUS_HEIGHT) / song.note_tracks.size());
           for (auto track : song.note_tracks) {
             track_handlers[track.first]->resize(render_size);
           }
@@ -191,9 +204,28 @@ int main(int argc, char* argv[]) {
               }
               break;
             case Keyboard::L:
-              song.changeNoteLengths(2);
+              song.changeNoteLengths(1);
+              break;
+            case Keyboard::B:
+              song.multiplyBPM(2);
+              break;
+            case Keyboard::W:
+              song.addMinimumWordGap(1);
+              break;
+            case Keyboard::Num9:
+              song.gap -= e.key.shift ? 10 : 1;
+              break;
+            case Keyboard::Num0:
+              song.gap += e.key.shift ? 10 : 1;
+              break;
+            case Keyboard::LBracket:
+              song.bpm -= e.key.shift ? 1 : 0.1f;
+              break;
+            case Keyboard::RBracket:
+              song.bpm += e.key.shift ? 1 : 0.1f;
               break;
             default:
+              cout << "Key pressed:" << e.key.code << endl;
               break;
           }
           break;
