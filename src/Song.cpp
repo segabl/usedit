@@ -98,6 +98,7 @@ bool Song::loadFromFile(string fname) {
     if (file.eof()) {
       file.close();
       log(2, "End of file reached without final \"E\" marker!");
+      clear();
       return false;
     }
   }
@@ -118,6 +119,7 @@ bool Song::loadFromFile(string fname) {
     log(0, "Song audio file loaded");
   } else {
     log(2, "Could not open \"" + soundfile + "\"!");
+    clear();
     return false;
   }
 
@@ -127,6 +129,7 @@ bool Song::loadFromFile(string fname) {
       log(2, "Could not open \"" + coverfile + "\"!");
     }
   }
+  log(0, "Setting this->fname = " + fname);
   this->fname == fname;
   return true;
 }
@@ -170,6 +173,7 @@ bool Song::saveToFile(string fname) const {
   }
   file << "E";
   file.close();
+  log(0, "Saved song to \"" + fname + "\"");
   return true;
 }
 
@@ -281,7 +285,20 @@ void Song::changeNoteLengths(int amount) {
         continue;
       }
       int max_inc = note->next ? note->next->position - note->position - note->length : amount;
-      note->length += min(max_inc ,max(1 - note->length, amount));
+      note->length += min(max_inc, max(1 - note->length, amount));
+    }
+  }
+}
+
+void Song::addMinimumWordGap(unsigned amount) {
+  for (auto track : note_tracks) {
+    for (Note* note = track.second.begin(); note->next; note = note->next) {
+      if (note->type == Note::LINEBREAK || note->next->type == Note::LINEBREAK) {
+        continue;
+      }
+      if (note->lyrics.at(note->lyrics.size() - 1) == ' ' || note->next->lyrics.at(0) == ' ') {
+        note->length -= min(note->length - 1, max(0, (int) amount - (note->next->position - note->position - note->length)));
+      }
     }
   }
 }

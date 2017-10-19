@@ -56,6 +56,7 @@ class Song {
     void fixPitches();
     void multiplyBPM(float mult);
     void changeNoteLengths(int amount);
+    void addMinimumWordGap(unsigned amount);
 };
 
 #endif /* SRC_SONG_H_ */
