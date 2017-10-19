@@ -21,10 +21,11 @@
 using namespace sf;
 using namespace std;
 
-sf::Color TrackHandler::track_colors[] = { Color(70, 220, 255), // P1
-Color(70, 220, 255), // P1 duet
-Color(255, 100, 100) // P2 duet
-    };
+sf::Color TrackHandler::track_colors[] = {
+  Color(70, 220, 255), // P1
+  Color(70, 220, 255), // P1 duet
+  Color(255, 100, 100) // P2 duet
+};
 
 void drawNote(RenderTarget& rt, Note* note, Vector2f scale, Color blend) {
   Texture tex = ResourceManager::texture("note");
@@ -59,8 +60,8 @@ void drawNote(RenderTarget& rt, Note* note, Vector2f scale, Color blend) {
 }
 
 TrackHandler::TrackHandler(Song* song, int track_number, Vector2f size) :
-    song(song), track_number(track_number), tone_generator(abs(track_number % 2)), view(FloatRect(0, 0, size.x, size.y)), notes(song->note_tracks[track_number]),
-    current_note(notes.begin()), scroll_pos(current_note->position - 4, current_note->pitch), scroll_to(scroll_pos) {
+    song(song), track_number(track_number), tone_generator(abs(track_number % 2)), view(FloatRect(0, 0, size.x, size.y)), notes(song->note_tracks[track_number]), current_note(
+        notes.begin()), scroll_pos(current_note->position - 4, current_note->pitch), scroll_to(scroll_pos) {
   texture.create(size.x, size.y);
   log(0, "Track handler " + toString(track_number) + " created");
 }
@@ -75,14 +76,14 @@ void TrackHandler::resize(Vector2f size) {
 }
 
 void TrackHandler::update(float delta, Vector2f scale, Vector2i mouse_pos, bool allow_input) {
-  texture.clear(Color(20, 20, 20));
+  texture.clear(ResourceManager::color("background"));
   RectangleShape rectangle;
 
   float song_pos = SECONDS_TO_BEATS(song->getPosition().asSeconds() - song->gap / 1000.f, song->bpm);
 
-  if (song_pos >= current_note->position && song_pos < current_note->position + current_note->length
-      && current_note->type != Note::FREESTYLE && current_note->type != Note::LINEBREAK) {
-      tone_generator.play(current_note->pitch, seconds(BEATS_TO_SECONDS(current_note->length - song_pos + current_note->position, song->bpm));
+  if (song_pos >= current_note->position && song_pos < current_note->position + current_note->length && current_note->type != Note::FREESTYLE
+      && current_note->type != Note::LINEBREAK) {
+    tone_generator.play(current_note->pitch, seconds(BEATS_TO_SECONDS(current_note->length - song_pos + current_note->position, song->bpm));
   }
 
   if (current_note->next && song_pos > current_note->position + current_note->length) {
@@ -95,14 +96,14 @@ void TrackHandler::update(float delta, Vector2f scale, Vector2i mouse_pos, bool 
 
   Vector2f track_size(texture.getSize().x, texture.getSize().y);
 
-  bool fixed_scroll = false;
+  bool fixed_scroll = track_number > 0;
   if (fixed_scroll) {
     if ((current_note->line_start->position - song_pos) * scale.x > track_size.x * 2.f) {
       scroll_to.x = current_note->line_start->position - (track_size.x / scale.x) * 0.25f;
     } else {
       scroll_to.x = max(song_pos - (track_size.x / scale.x) * 0.25f, scroll_to.x);
     }
-    scroll_to.x = min(scroll_to.x, (float)notes.end()->position + notes.end()->length);
+    scroll_to.x = min(scroll_to.x, (float) notes.end()->position + notes.end()->length);
   } else {
     if ((song_pos - scroll_to.x) * scale.x > track_size.x * 0.9f && current_note->next) {
       scroll_to.x = floor(song_pos);
