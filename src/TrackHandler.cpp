@@ -82,7 +82,7 @@ void TrackHandler::update(float delta, Vector2f scale, Vector2i mouse_pos, bool 
   float song_pos = SECONDS_TO_BEATS(song->getPosition().asSeconds() - song->gap / 1000.f, song->bpm);
 
   if (song_pos >= current_note->position && song_pos < current_note->position + current_note->length && current_note->type != Note::FREESTYLE
-      && current_note->type != Note::LINEBREAK) {
+      && current_note->type != Note::LINEBREAK && song->isPlaying() && !tone_generator.isPlaying()) {
     tone_generator.play(current_note->pitch, seconds(BEATS_TO_SECONDS(current_note->length - song_pos + current_note->position, song->bpm));
   }
 

@@ -13,7 +13,7 @@
 #include "Utils.h"
 
 using audiere::AudioDevicePtr;
-using audiere::OutputStreamPtr;
+
 using audiere::SampleSourcePtr;
 using audiere::CreateTone;
 using audiere::CreateSquareWave;
@@ -29,28 +29,12 @@ using std::get;
 AudioDevicePtr ToneGenerator::audio_device(OpenDevice());
 
 void ToneGenerator::work() {
-  OutputStreamPtr stream;
-  Clock c;
-  tuple<int, Time> playing;
-  size_t queue_size;
   while (alive) {
     mtx.lock();
-    queue_size = queue.size();
-    if (queue_size) {
-      playing = queue.front();
-      mtx.unlock();
-      stream = tone_map[get<0>(playing)];
-      if (stream && stream->isPlaying()) {
-        stream->setVolume(volume * (type == 0 ? 1 : 0.25));
-        if (c.getElapsedTime() > get<1>(playing)) {
-          stream->stop();
-          mtx.lock();
-          queue.pop();
-          mtx.unlock();
-        }
-      } else {
-        stream->play();
-        c.restart();
+    if (stream && stream->isPlaying()) {
+      stream->setVolume(volume * (type == 0 ? 1 : 0.25));
+      if (clock.getElapsedTime() > time) {
+        stream->stop();
       }
     }
     mtx.unlock();
@@ -80,8 +64,15 @@ void ToneGenerator::setVolume(float volume) {
 
 void ToneGenerator::play(int pitch, Time time) {
   mtx.lock();
-  if (!queue.size()) {
-    queue.push(tuple<int, Time>(pitch, time));
+  stream = tone_map[pitch];
+  this->time = time;
+  if (stream) {
+    clock.restart();
+    stream->play();
   }
   mtx.unlock();
+}
+
+bool ToneGenerator::isPlaying() {
+  return stream && stream->isPlaying();
 }

@@ -14,7 +14,6 @@
 #include <map>
 #include <thread>
 #include <mutex>
-#include <queue>
 #include <tuple>
 
 typedef std::map<int, audiere::OutputStreamPtr> OutputStreamPtrMap;
@@ -23,11 +22,13 @@ class ToneGenerator {
   private:
     static audiere::AudioDevicePtr audio_device;
     OutputStreamPtrMap tone_map;
+    audiere::OutputStreamPtr stream;
     int type;
     float volume;
+    sf::Time time;
     bool alive;
+    sf::Clock clock;
     std::thread play_thread;
-    std::queue<std::tuple<int, sf::Time>> queue;
     std::mutex mtx;
     void work();
   public:
@@ -35,6 +36,7 @@ class ToneGenerator {
     ~ToneGenerator();
     void setVolume(float volume);
     void play(int pitch, sf::Time time = sf::Time::Zero);
+    bool isPlaying();
 };
 
 #endif /* TONEGENERATOR_H_ */
