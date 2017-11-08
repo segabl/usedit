@@ -16,7 +16,10 @@
 #define SECONDS_TO_BEATS(SECONDS, BPM) (((BPM) / 60.f) * (SECONDS) * 4.f)
 
 void log(int level, std::string message);
+
 std::string getOpenFile(std::string title);
+
+std::vector<std::string> findFiles(std::string path, std::string pattern = "");
 
 std::vector<std::string> explode(std::string data, std::string delimiter);
 std::string implode(std::vector<std::string> data, std::string delimiter);

@@ -14,6 +14,7 @@
 
 #include <SFML/System/Time.hpp>
 #include <SFML/Graphics/Texture.hpp>
+#include <sol.hpp>
 
 #include <map>
 #include <list>
@@ -28,7 +29,9 @@ class Song {
     int sample_rate;
     audiere::OutputStreamPtr stream;
     bool paused;
+    sol::state lua;
   public:
+    bool modified;
     std::string fname;
     float bpm;
     float gap;
@@ -54,10 +57,8 @@ class Song {
     sf::Time getPosition() const;
     sf::Time length() const;
 
-    void fixPitches();
-    void multiplyBPM(float mult);
+    bool executeLuaFile(std::string fname);
     void changeNoteLengths(int amount);
-    void addMinimumWordGap(unsigned amount);
 };
 
 #endif /* SRC_SONG_H_ */

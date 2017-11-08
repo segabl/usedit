@@ -8,7 +8,9 @@
 #include "Utils.h"
 
 #include <iostream>
+#include <regex>
 #include <windows.h>
+#include <dirent.h>
 
 void log(int level, std::string message) {
   std::ostream* out = &std::cout;
@@ -37,6 +39,24 @@ std::string getOpenFile(std::string title) {
     return filename;
   }
   return "";
+}
+
+std::vector<std::string> findFiles(std::string path, std::string pattern) {
+  std::vector<std::string> files;
+  DIR *dir;
+  struct dirent *ent;
+  std::string fname;
+  std::smatch match;
+  if ((dir = opendir(path.c_str())) != NULL) {
+    while ((ent = readdir(dir)) != NULL) {
+      fname = ent->d_name;
+      if (pattern == "" || regex_search(fname, match, std::regex(pattern, std::regex::icase))) {
+        files.push_back(path + "/" + fname);
+      }
+    }
+    closedir(dir);
+  }
+  return files;
 }
 
 std::vector<std::string> explode(std::string data, std::string delimiter) {

@@ -29,7 +29,7 @@ class TrackHandler {
     ToneGenerator tone_generator;
     sf::RenderTexture texture;
     sf::View view;
-    NoteList notes;
+    NoteList& notes;
     NoteList::iterator current_note;
     NoteList::iterator current_line_start;
     sf::Vector2f scroll_pos;

@@ -14,7 +14,6 @@
 
 #include <SFML/Graphics.hpp>
 
-#include <iostream>
 #include <memory>
 #include <cassert>
 #include <cmath>
@@ -25,15 +24,17 @@ using namespace std;
 using namespace sf;
 using namespace gui;
 
-#define INTERFACE_HEIGHT 128
-#define STATUS_HEIGHT 32
-#define SEEK_HEIGHT 8
+#define INTERFACE_HEIGHT      128
+#define STATUS_HEIGHT         32
+#define SEEK_HEIGHT           8
+#define STATUS_TEXT_SIZE      20
 
 typedef unique_ptr<TrackHandler> TrackHandlerPtr;
 typedef unique_ptr<Button> ButtonPtr;
 
 int main(int argc, char* argv[]) {
-  ResourceManager::initializeResources(regex_replace(argv[0], regex(R"([^/\\]+$)"), ""));
+  string main_directory = regex_replace(regex_replace(argv[0], regex(R"([^/\\]+$)"), ""), regex(R"(\\)"), "/");
+  ResourceManager::initializeResources(main_directory);
 
   RenderWindow win(VideoMode(1280, 720), "USE");
   win.setFramerateLimit(0);
@@ -51,13 +52,32 @@ int main(int argc, char* argv[]) {
 
   vector<Element*> bottom_elements;
 
-  DropdownList list_file(Text("File", ResourceManager::font("default"), STATUS_HEIGHT - 8), Vector2f(160, STATUS_HEIGHT), DropdownList::UP);
+  DropdownList list_file(Text("File", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT), DropdownList::UP);
   bottom_elements.push_back(&list_file);
 
-  Button button_load(Text("Open", ResourceManager::font("default"), STATUS_HEIGHT - 8), Vector2f(160, STATUS_HEIGHT));
-  Button button_save(Text("Save", ResourceManager::font("default"), STATUS_HEIGHT - 8), Vector2f(160, STATUS_HEIGHT));
+  Button button_load(Text("Open", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT));
+  Button button_save(Text("Save", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT));
+  button_save.setEnabled(false);
   list_file.addElement(&button_save);
   list_file.addElement(&button_load);
+
+  DropdownList list_functions(Text("Functions", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT), DropdownList::UP);
+  list_functions.setEnabled(false);
+  bottom_elements.push_back(&list_functions);
+  vector<string> files = findFiles(main_directory + "functions", R"(\.lua$)");
+  sort(files.begin(), files.end());
+  reverse(files.begin(), files.end());
+  vector<Element*> function_elements;
+  smatch match;
+  for (auto file : files) {
+    regex_search(file, match, std::regex(R"(.*?([^/\\]+)\.lua$)", std::regex::icase));
+    Button* button = new Button(Text(regex_replace(match.str(1), regex(R"(_)"), " "), ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(256, STATUS_HEIGHT));
+    button->setCallback([&song,file](Element*) {
+      song.executeLuaFile(file);
+    });
+    function_elements.push_back(button);
+    list_functions.addElement(button);
+  }
 
   function<void(string)> loadSong = [&](string fname) {
     song_loaded = song.loadFromFile(fname);
@@ -68,6 +88,7 @@ int main(int argc, char* argv[]) {
       }
       song.play();
     }
+    list_functions.setEnabled(song_loaded && !function_elements.empty());
     button_save.setEnabled(song_loaded);
   };
 
@@ -204,15 +225,6 @@ int main(int argc, char* argv[]) {
                 }
               }
               break;
-            case Keyboard::L:
-              song.changeNoteLengths(1);
-              break;
-            case Keyboard::B:
-              song.multiplyBPM(2);
-              break;
-            case Keyboard::W:
-              song.addMinimumWordGap(1);
-              break;
             case Keyboard::Num9:
               song.gap -= e.key.shift ? 10 : 1;
               break;
@@ -226,7 +238,7 @@ int main(int argc, char* argv[]) {
               song.bpm += e.key.shift ? 1 : 0.1f;
               break;
             default:
-              cout << "Key pressed:" << e.key.code << endl;
+              log(0, "Key pressed: " + toString(e.key.code));
               break;
           }
           break;
@@ -235,5 +247,10 @@ int main(int argc, char* argv[]) {
       }
     }
   }
+
+  for (auto element : function_elements) {
+    delete element;
+  }
+
   return 0;
 }

@@ -40,6 +40,28 @@ AudioDevicePtr Song::audio_device(OpenDevice());
 
 Song::Song() {
   clear();
+  lua.open_libraries();
+  lua["log"] = static_cast<void (*)(int, std::string)>(log);
+  lua.new_usertype<Song>("Song",
+      "bpm", &Song::bpm,
+      "gap", &Song::gap,
+      "start", &Song::start,
+      "tracks", &Song::note_tracks
+  );
+  lua.new_usertype<Note>("Note",
+      sol::constructors<Note(Note::Type, int, int, int, std::string)>(),
+      "type", &Note::type,
+      "position", &Note::position,
+      "length", &Note::length,
+      "pitch", &Note::pitch,
+      "lyrics", &Note::lyrics
+  );
+  lua.new_enum("NoteType",
+      "LINEBREAK", Note::LINEBREAK,
+      "DEFAULT", Note::DEFAULT,
+      "FREESTYLE", Note::FREESTYLE,
+      "GOLD", Note::GOLD
+  );
 }
 
 Song::~Song() {
@@ -179,6 +201,7 @@ bool Song::saveToFile(string fname) const {
 
 void Song::clear() {
   stop();
+  modified = false;
   fname = "";
   sample_rate = 44100;
   stream = nullptr;
@@ -248,30 +271,15 @@ Time Song::length() const {
   return Time();
 }
 
-void Song::fixPitches() {
-  for (auto track : note_tracks) {
-    float average = 0;
-    for (auto note = track.second.begin(); note != track.second.end(); note++) {
-      average += note->pitch;
-    }
-    average = (average / track.second.size()) / 12;
-    if (abs(average) > 2) {
-      for (auto note = track.second.begin(); note != track.second.end(); note++) {
-        note->pitch += -round(average) * 12;
-      }
-    }
+bool Song::executeLuaFile(string fname) {
+  lua["song"] = this;
+  try {
+    lua.script_file(fname);
+  } catch (sol::error &e) {
+    log(2, e.what());
+    return false;
   }
-}
-
-void Song::multiplyBPM(float mult) {
-  bpm *= mult;
-  for (auto track : note_tracks) {
-    Note note;
-    for (auto note = track.second.begin(); note != track.second.end(); note++) {
-      note->position *= mult;
-      note->length *= mult;
-    }
-  }
+  return true;
 }
 
 void Song::changeNoteLengths(int amount) {
@@ -282,19 +290,6 @@ void Song::changeNoteLengths(int amount) {
       }
       int max_inc = next(note) != track.second.end() ? next(note)->position - note->position - note->length : amount;
       note->length += min(max_inc, max(1 - note->length, amount));
-    }
-  }
-}
-
-void Song::addMinimumWordGap(unsigned amount) {
-  for (auto track : note_tracks) {
-    for (auto note = track.second.begin(); note != track.second.end(); note++) {
-      if (note->type == Note::LINEBREAK || next(note)->type == Note::LINEBREAK) {
-        continue;
-      }
-      if (note->lyrics.at(note->lyrics.size() - 1) == ' ' || next(note)->lyrics.at(0) == ' ') {
-        note->length -= min(note->length - 1, max(0, (int) amount - (next(note)->position - note->position - note->length)));
-      }
     }
   }
 }
