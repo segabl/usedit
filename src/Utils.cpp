@@ -7,6 +7,8 @@
 
 #include "Utils.h"
 
+#include <ctime>
+#include <iomanip>
 #include <iostream>
 #include <regex>
 #include <windows.h>
@@ -18,7 +20,9 @@ void log(int level, std::string message) {
     out = &std::cerr;
   }
   const char* levels[] = { "INFO", "WARN", "ERROR", "FATAL" };
-  (*out) << "[" << levels[level] << "] " << message << std::endl;
+  std::time_t t = std::time(nullptr);
+  std::tm tm = *std::localtime(&t);
+  (*out) << std::put_time(&tm, "[%H:%M:%S]") << "[" << levels[(level >= 0 && level < 4) ? level : 0] << "] " << message << std::endl;
 }
 
 std::string getOpenFile(std::string title) {
