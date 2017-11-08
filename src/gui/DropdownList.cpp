@@ -48,28 +48,27 @@ void gui::DropdownList::removeElement(Element* element) {
 }
 
 void gui::DropdownList::update(sf::Vector2i mouse_pos) {
-  if (!enabled) {
-    return;
-  }
-  bool pressed = sf::Mouse::isButtonPressed(sf::Mouse::Left) != mouse_pressed && sf::Mouse::isButtonPressed(sf::Mouse::Left);
-  bool released = sf::Mouse::isButtonPressed(sf::Mouse::Left) != mouse_pressed && !sf::Mouse::isButtonPressed(sf::Mouse::Left);
-  mouse_pressed = sf::Mouse::isButtonPressed(sf::Mouse::Left);
+  if (enabled) {
+    bool pressed = sf::Mouse::isButtonPressed(sf::Mouse::Left) != mouse_pressed && sf::Mouse::isButtonPressed(sf::Mouse::Left);
+    bool released = sf::Mouse::isButtonPressed(sf::Mouse::Left) != mouse_pressed && !sf::Mouse::isButtonPressed(sf::Mouse::Left);
+    mouse_pressed = sf::Mouse::isButtonPressed(sf::Mouse::Left);
 
-  size = button.getSize();
-  if (show_list) {
-    for (Element* element : elements) {
-      size.x = std::max(size.x, element->getSize().x);
-      size.y += element->getSize().y;
-      element->setPosition(getPosition() + element->getOrigin() + sf::Vector2f(0, size.y * (direction == UP ? -1 : 1) + button.getSize().y * (direction == UP ? 1 : -1)));
-      element->setScale(getScale());
-      element->update(mouse_pos);
+    size = button.getSize();
+    if (show_list) {
+      for (Element* element : elements) {
+        size.x = std::max(size.x, element->getSize().x);
+        size.y += element->getSize().y;
+        element->setPosition(getPosition() + element->getOrigin() + sf::Vector2f(0, size.y * (direction == UP ? -1 : 1) + button.getSize().y * (direction == UP ? 1 : -1)));
+        element->setScale(getScale());
+        element->update(mouse_pos);
+      }
     }
-  }
 
-  sf::FloatRect rect_full(getPosition().x - getOrigin().x, getPosition().y - getOrigin().y - size.y * (direction == UP) + button.getSize().y * (direction == UP), size.x, size.y);
-  sf::FloatRect rect(getPosition().x - getOrigin().x, getPosition().y - getOrigin().y - size.y, button.getSize().x, button.getSize().y);
-  if ((!rect_full.contains(mouse_pos.x, mouse_pos.y) && pressed) || (!rect.contains(mouse_pos.x, mouse_pos.y) && released)) {
-    show_list = false;
+    sf::FloatRect rect_full(getPosition().x - getOrigin().x, getPosition().y - getOrigin().y - size.y * (direction == UP) + button.getSize().y * (direction == UP), size.x, size.y);
+    sf::FloatRect rect(getPosition().x - getOrigin().x, getPosition().y - getOrigin().y - size.y, button.getSize().x, button.getSize().y);
+    if ((!rect_full.contains(mouse_pos.x, mouse_pos.y) && pressed) || (!rect.contains(mouse_pos.x, mouse_pos.y) && released)) {
+      show_list = false;
+    }
   }
 
   button.setEnabled(isEnabled());
