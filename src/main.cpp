@@ -200,7 +200,7 @@ int main(int argc, char* argv[]) {
           win.close();
           break;
         case Event::Resized: {
-          render_size = Vector2f(e.size.width, (e.size.height - INTERFACE_HEIGHT - SEEK_HEIGHT - STATUS_HEIGHT) / song.note_tracks.size());
+          render_size = Vector2f(e.size.width, (e.size.height - INTERFACE_HEIGHT - SEEK_HEIGHT - STATUS_HEIGHT) / max((int)song.note_tracks.size(), 1));
           for (auto track : song.note_tracks) {
             track_handlers[track.first]->resize(render_size);
           }
