@@ -20,4 +20,4 @@ for _, track in pairs(song.tracks) do
   end
 end
 
-log(0, fixed and "Fixed note pitches" or "No notes needed fixing")
+log(0, fixed and "Normalized note pitches" or "No normalization needed")
