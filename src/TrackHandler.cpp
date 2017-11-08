@@ -21,11 +21,10 @@
 using namespace sf;
 using namespace std;
 
-sf::Color TrackHandler::track_colors[] = {
-  Color(70, 220, 255), // P1
-  Color(70, 220, 255), // P1 duet
-  Color(255, 100, 100) // P2 duet
-};
+sf::Color TrackHandler::track_colors[] = { Color(70, 220, 255), // P1
+Color(70, 220, 255), // P1 duet
+Color(255, 100, 100) // P2 duet
+    };
 
 void drawNote(RenderTarget& rt, Note* note, Vector2f scale, Color blend) {
   Texture tex = ResourceManager::texture("note");
@@ -86,7 +85,10 @@ void TrackHandler::update(float delta, Vector2f scale, Vector2i mouse_pos, bool 
     tone_generator.play(current_note->pitch, seconds(BEATS_TO_SECONDS(current_note->length - song_pos + current_note->position, song->bpm));
   }
 
-  if (current_note->next && song_pos > current_note->position + current_note->length) {
+  while (current_note->prev && song_pos < current_note->prev->position + current_note->prev->length) {
+    current_note = current_note->prev;
+  }
+  while (current_note->next && song_pos > current_note->position + current_note->length) {
     current_note = current_note->next;
   }
 

@@ -91,13 +91,14 @@ int main(int argc, char* argv[]) {
     delta = c.restart().asSeconds();
 
     Vector2i mouse_pos = Mouse::getPosition(win);
+    Vector2u win_size = win.getSize();
     Vector2f scale_vec((64 / (song.bpm / 60.f)) * scale, 64 * scale * 0.25);
 
     win.clear(ResourceManager::color("background"));
 
     if (song_loaded) {
       float offset = 0;
-      RectangleShape r(Vector2f(win.getSize().x, 2));
+      RectangleShape r(Vector2f(win_size.x, 2));
       r.setFillColor(ResourceManager::color("interface"));
       for (auto track : song.note_tracks) {
         track_handlers[track.first]->update(delta, scale_vec, Vector2i(mouse_pos.x, mouse_pos.y - INTERFACE_HEIGHT - offset), !gui::Element::focusedElement());
@@ -110,23 +111,26 @@ int main(int argc, char* argv[]) {
         }
         offset += render_size.y;
       }
-
-      r.setSize(Vector2f(win.getSize().x * (song.getPosition() / song.length()), SEEK_HEIGHT));
-      r.setFillColor(ResourceManager::color("text"));
-      r.setOutlineThickness(0);
-      r.setPosition(0, win.getSize().y - STATUS_HEIGHT - SEEK_HEIGHT);
-      win.draw(r);
     }
 
-    RectangleShape r(Vector2f(win.getSize().x, INTERFACE_HEIGHT));
+    RectangleShape r(Vector2f(win_size.x, INTERFACE_HEIGHT));
     r.setFillColor(ResourceManager::color("interface"));
     r.setOutlineThickness(0);
     r.setPosition(0, 0);
     win.draw(r);
 
-    r.setSize(Vector2f(win.getSize().x, STATUS_HEIGHT));
-    r.setPosition(0, win.getSize().y - STATUS_HEIGHT);
+    r.setSize(Vector2f(win_size.x, STATUS_HEIGHT));
+    r.setPosition(0, win_size.y - STATUS_HEIGHT);
     win.draw(r);
+
+    r.setSize(Vector2f(win_size.x * (song.getPosition() / song.length()), SEEK_HEIGHT));
+    r.setFillColor(ResourceManager::color("text"));
+    r.setOutlineThickness(0);
+    r.setPosition(0, win_size.y - STATUS_HEIGHT - SEEK_HEIGHT);
+    win.draw(r);
+    if (mouse_pos.y > win_size.y - STATUS_HEIGHT - SEEK_HEIGHT && mouse_pos.y < win_size.y - STATUS_HEIGHT && Mouse::isButtonPressed(Mouse::Button::Left)) {
+      song.setPosition(seconds(song.length().asSeconds() * ((float)mouse_pos.x / win_size.x)));
+    }
 
     r.setSize(Vector2f(INTERFACE_HEIGHT - 16, INTERFACE_HEIGHT - 16));
     r.setTexture(&song.cover, true);
@@ -145,25 +149,25 @@ int main(int argc, char* argv[]) {
 
     t.setString(toString(song.bpm));
     t.setCharacterSize(24);
-    t.setPosition(win.getSize().x - t.getLocalBounds().width - 16, INTERFACE_HEIGHT / 2 - 24 - 4);
+    t.setPosition(win_size.x - t.getLocalBounds().width - 16, INTERFACE_HEIGHT / 2 - 24 - 4);
     win.draw(t);
 
     t.setString(toString(song.gap));
-    t.setPosition(win.getSize().x - t.getLocalBounds().width - 16, INTERFACE_HEIGHT / 2 + 18 + 4);
+    t.setPosition(win_size.x - t.getLocalBounds().width - 16, INTERFACE_HEIGHT / 2 + 18 + 4);
     win.draw(t);
 
     t.setString("bpm");
     t.setCharacterSize(18);
-    t.setPosition(win.getSize().x - t.getLocalBounds().width - 16, INTERFACE_HEIGHT / 2 - 24 - 18 - 4);
+    t.setPosition(win_size.x - t.getLocalBounds().width - 16, INTERFACE_HEIGHT / 2 - 24 - 18 - 4);
     win.draw(t);
 
     t.setString("gap");
-    t.setPosition(win.getSize().x - t.getLocalBounds().width - 16, INTERFACE_HEIGHT / 2 + 4);
+    t.setPosition(win_size.x - t.getLocalBounds().width - 16, INTERFACE_HEIGHT / 2 + 4);
     win.draw(t);
 
     for (size_t i = 0; i < bottom_elements.size(); i++) {
-      bottom_elements[i]->setPosition(win.getSize().x / max((size_t) 8, bottom_elements.size()) * i, win.getSize().y - STATUS_HEIGHT);
-      bottom_elements[i]->setSize(win.getSize().x / max((size_t) 8, bottom_elements.size()), STATUS_HEIGHT);
+      bottom_elements[i]->setPosition(win_size.x / max((size_t) 8, bottom_elements.size()) * i, win_size.y - STATUS_HEIGHT);
+      bottom_elements[i]->setSize(win_size.x / max((size_t) 8, bottom_elements.size()), STATUS_HEIGHT);
       bottom_elements[i]->update(mouse_pos);
       win.draw(*bottom_elements[i]);
     }
