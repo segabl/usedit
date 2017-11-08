@@ -58,29 +58,13 @@ void drawNote(RenderTarget& rt, NoteList::iterator note, Vector2f scale, Color b
   rt.draw(note_array, &tex);
 }
 
-NoteList::iterator findLineBreak(NoteList::iterator note, NoteList& notes) {
-  while (next(note) != notes.end() && note->type != Note::LINEBREAK) {
-    note = next(note);
-  }
-  return note;
-}
-
-NoteList::iterator findLineStart(NoteList::iterator note, NoteList& notes) {
-  while (note != notes.begin() && prev(note)->type != Note::LINEBREAK) {
-    note = prev(note);
-  }
-  return note;
-}
-
 TrackHandler::TrackHandler(Song* song, int track_number, Vector2f size) :
     song(song), track_number(track_number), tone_generator(abs(track_number % 2)), view(FloatRect(0, 0, size.x, size.y)), notes(song->note_tracks[track_number]), current_note(
         notes.begin()), current_line_start(current_note), scroll_pos(current_note->position - 4, current_note->pitch), scroll_to(scroll_pos) {
   texture.create(size.x, size.y);
-  log(0, "Track handler " + toString(track_number) + " created");
 }
 
 TrackHandler::~TrackHandler() {
-  log(0, "Track handler " + toString(track_number) + " destroyed");
 }
 
 void TrackHandler::resize(Vector2f size) {
@@ -99,21 +83,18 @@ void TrackHandler::update(float delta, Vector2f scale, Vector2i mouse_pos, bool 
     tone_generator.play(current_note->pitch, seconds(BEATS_TO_SECONDS(current_note->length - song_pos + current_note->position, song->bpm));
   }
 
-  bool calc_line_start = false;
   while (current_note != notes.begin() && song_pos < prev(current_note)->position + prev(current_note)->length) {
     current_note--;
     if (current_note->type == Note::LINEBREAK) {
-      calc_line_start = true;
+      current_line_start = next(current_note);
     }
+    scroll_to.x = current_note->position - 4;
   }
   while (next(current_note) != notes.end() && song_pos > current_note->position + current_note->length) {
     current_note++;
     if (current_note->type == Note::LINEBREAK) {
       current_line_start = next(current_note);
     }
-  }
-  if (calc_line_start) {
-    current_line_start = findLineStart(current_note, notes);
   }
 
   Vector2f track_size(texture.getSize().x, texture.getSize().y);
@@ -134,9 +115,6 @@ void TrackHandler::update(float delta, Vector2f scale, Vector2i mouse_pos, bool 
       scroll_to.x = next(current_note)->position - 4;
     }
     scroll_to.x = min(scroll_to.x, prev(notes.end())->position + prev(notes.end())->length + 4.f);
-  }
-  if ((current_note->position - scroll_to.x) * scale.x < 0) {
-    scroll_to.x = current_note->position - 4;
   }
   if (current_note->type != Note::LINEBREAK && abs(current_note->pitch - scroll_to.y) * scale.y + scale.y > track_size.y) {
     scroll_to.y = (scroll_to.y + current_note->pitch) / 2;
