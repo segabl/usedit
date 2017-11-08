@@ -12,8 +12,12 @@
 #include <SFML/Graphics/View.hpp>
 #include <SFML/System/Vector2.hpp>
 
-#include "NoteList.h"
+#include "Note.h"
 #include "ToneGenerator.h"
+
+#include <list>
+
+typedef std::list<Note> NoteList;
 
 class Song;
 
@@ -26,7 +30,8 @@ class TrackHandler {
     sf::RenderTexture texture;
     sf::View view;
     NoteList notes;
-    Note* current_note;
+    NoteList::iterator current_note;
+    NoteList::iterator current_line_start;
     sf::Vector2f scroll_pos;
     sf::Vector2f scroll_to;
   public:

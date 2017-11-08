@@ -77,17 +77,17 @@ bool Song::loadFromFile(string fname) {
   } else if (regex_search(line, match, regex(R"(^([:F\*]) (-?[0-9]+) ([0-9]+) (-?[0-9]+) (.*))", regex::icase))) {
       // Notes
       Note::Type t = match.str(1) == "F" ? Note::FREESTYLE : (match.str(1) == "*" ? Note::GOLD : Note::DEFAULT);
-      note_tracks[player].add(new Note(t, toType<int>(match.str(2)), toType<int>(match.str(3)), toType<int>(match.str(4)), match.str(5)));
+      note_tracks[player].push_back(Note(t, toType<int>(match.str(2)), toType<int>(match.str(3)), toType<int>(match.str(4)), match.str(5)));
     } else if (regex_search(line, match, regex(R"(^- ([0-9]+)(?: ([0-9]+))?)", regex::icase))) {
     // Line break
-    note_tracks[player].add(new Note(Note::LINEBREAK, toType<int>(match.str(1))));
+    note_tracks[player].push_back(Note(Note::LINEBREAK, toType<int>(match.str(1))));
   } else if (regex_search(line, match, regex(R"(^P([0-9]))", regex::icase))) {
         // Player switch
         player = toType<int>(match.str(1));
       } else if (regex_search(line, match, regex(R"(^E)", regex::icase))) {
     // End of file
-    for (auto track : note_tracks) {
-      track.second.calcLineEnds();
+    for (auto track: note_tracks) {
+      track.second.sort();
     }
     file.close();
     break;
@@ -129,7 +129,6 @@ bool Song::loadFromFile(string fname) {
       log(2, "Could not open \"" + coverfile + "\"!");
     }
   }
-  log(0, "Setting this->fname = " + fname);
   this->fname == fname;
   return true;
 }
@@ -155,7 +154,8 @@ bool Song::saveToFile(string fname) const {
     if (track.first != 0) {
       file << "P" << track.first << endl;
     }
-    for (Note* note = track.second.begin(); note; note = note->next) {
+    Note note;
+    for (auto note = track.second.begin(); note != track.second.end(); note++) {
       if (note->type == Note::LINEBREAK) {
         file << "- " << note->position;
         if (note->length != 0) {
@@ -188,11 +188,6 @@ void Song::clear() {
   gap = 0;
   start = 0;
   tags.clear();
-  for (auto track : note_tracks) {
-    for (Note* note = track.second.end()->prev; note; note = note->prev) {
-      delete note->next;
-    }
-  }
   note_tracks.clear();
 }
 
@@ -256,12 +251,12 @@ Time Song::length() const {
 void Song::fixPitches() {
   for (auto track : note_tracks) {
     float average = 0;
-    for (Note* note = track.second.begin(); note; note = note->next) {
+    for (auto note = track.second.begin(); note != track.second.end(); note++) {
       average += note->pitch;
     }
     average = (average / track.second.size()) / 12;
     if (abs(average) > 2) {
-      for (Note* note = track.second.begin(); note; note = note->next) {
+      for (auto note = track.second.begin(); note != track.second.end(); note++) {
         note->pitch += -round(average) * 12;
       }
     }
@@ -271,7 +266,8 @@ void Song::fixPitches() {
 void Song::multiplyBPM(float mult) {
   bpm *= mult;
   for (auto track : note_tracks) {
-    for (Note* note = track.second.begin(); note; note = note->next) {
+    Note note;
+    for (auto note = track.second.begin(); note != track.second.end(); note++) {
       note->position *= mult;
       note->length *= mult;
     }
@@ -280,11 +276,11 @@ void Song::multiplyBPM(float mult) {
 
 void Song::changeNoteLengths(int amount) {
   for (auto track : note_tracks) {
-    for (Note* note = track.second.begin(); note; note = note->next) {
+    for (auto note = track.second.begin(); note != track.second.end(); note++) {
       if (note->type == Note::LINEBREAK) {
         continue;
       }
-      int max_inc = note->next ? note->next->position - note->position - note->length : amount;
+      int max_inc = next(note) != track.second.end() ? next(note)->position - note->position - note->length : amount;
       note->length += min(max_inc, max(1 - note->length, amount));
     }
   }
@@ -292,12 +288,12 @@ void Song::changeNoteLengths(int amount) {
 
 void Song::addMinimumWordGap(unsigned amount) {
   for (auto track : note_tracks) {
-    for (Note* note = track.second.begin(); note->next; note = note->next) {
-      if (note->type == Note::LINEBREAK || note->next->type == Note::LINEBREAK) {
+    for (auto note = track.second.begin(); note != track.second.end(); note++) {
+      if (note->type == Note::LINEBREAK || next(note)->type == Note::LINEBREAK) {
         continue;
       }
-      if (note->lyrics.at(note->lyrics.size() - 1) == ' ' || note->next->lyrics.at(0) == ' ') {
-        note->length -= min(note->length - 1, max(0, (int) amount - (note->next->position - note->position - note->length)));
+      if (note->lyrics.at(note->lyrics.size() - 1) == ' ' || next(note)->lyrics.at(0) == ' ') {
+        note->length -= min(note->length - 1, max(0, (int) amount - (next(note)->position - note->position - note->length)));
       }
     }
   }

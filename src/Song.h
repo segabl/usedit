@@ -8,7 +8,7 @@
 #ifndef SRC_SONG_H_
 #define SRC_SONG_H_
 
-#include "NoteList.h"
+#include "Note.h"
 
 #include <audiere.h>
 
@@ -18,6 +18,7 @@
 #include <map>
 #include <list>
 
+typedef std::list<Note> NoteList;
 typedef std::map<std::string, std::string> StringMap;
 typedef std::map<int, NoteList> NoteListMap;
 

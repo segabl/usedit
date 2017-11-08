@@ -62,13 +62,10 @@ int main(int argc, char* argv[]) {
   function<void(string)> loadSong = [&](string fname) {
     song_loaded = song.loadFromFile(fname);
     if (song_loaded) {
-      song.fixPitches();
-
       render_size = Vector2f(win.getSize().x, (win.getSize().y - INTERFACE_HEIGHT - SEEK_HEIGHT - STATUS_HEIGHT) / song.note_tracks.size());
       for (auto track : song.note_tracks) {
         track_handlers[track.first].reset(new TrackHandler(&song, track.first, render_size));
       }
-
       song.play();
     }
     button_save.setEnabled(song_loaded);

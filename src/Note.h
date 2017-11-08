@@ -12,10 +12,6 @@
 
 class Note {
   public:
-    Note* next;
-    Note* prev;
-    Note* line_start;
-    Note* line_end;
     enum Type {
       LINEBREAK = -1, DEFAULT, FREESTYLE, GOLD,
     };
