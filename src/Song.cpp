@@ -45,7 +45,6 @@ Song::Song() {
   lua.new_usertype<Song>("Song",
       "bpm", &Song::bpm,
       "gap", &Song::gap,
-      "start", &Song::start,
       "tracks", &Song::note_tracks
   );
   lua.new_usertype<Note>("Note",
@@ -151,7 +150,7 @@ bool Song::loadFromFile(string fname) {
       log(2, "Could not open \"" + coverfile + "\"!");
     }
   }
-  this->fname == fname;
+  this->fname = fname;
   return true;
 }
 
@@ -280,16 +279,4 @@ bool Song::executeLuaFile(string fname) {
     return false;
   }
   return true;
-}
-
-void Song::changeNoteLengths(int amount) {
-  for (auto track : note_tracks) {
-    for (auto note = track.second.begin(); note != track.second.end(); note++) {
-      if (note->type == Note::LINEBREAK) {
-        continue;
-      }
-      int max_inc = next(note) != track.second.end() ? next(note)->position - note->position - note->length : amount;
-      note->length += min(max_inc, max(1 - note->length, amount));
-    }
-  }
 }

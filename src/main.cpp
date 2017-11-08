@@ -99,6 +99,10 @@ int main(int argc, char* argv[]) {
     }
   });
 
+  button_save.setCallback([&](Element*){
+    song.saveToFile(song.fname + ".new.txt");
+  });
+
   if (argc > 1) {
     loadSong(argv[1]);
   }

@@ -58,7 +58,6 @@ class Song {
     sf::Time length() const;
 
     bool executeLuaFile(std::string fname);
-    void changeNoteLengths(int amount);
 };
 
 #endif /* SRC_SONG_H_ */
