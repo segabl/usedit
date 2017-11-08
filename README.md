@@ -1,2 +1,2 @@
 # usedit
-WIP song editor for UltraStar using SFML and audiere
+WIP song editor for UltraStar using SFML, audiere and LUA
