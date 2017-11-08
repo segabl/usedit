@@ -130,13 +130,13 @@ void TrackHandler::update(float delta, Vector2f scale, Vector2i mouse_pos, bool 
     if ((song_pos - scroll_to.x) * scale.x > track_size.x * 0.9f && next(current_note) != notes.end()) {
       scroll_to.x = floor(song_pos);
     }
-    if ((current_note->position - scroll_to.x) * scale.x < 0) {
-      scroll_to.x = current_note->position - 4;
-    }
     if (next(current_note) != notes.end() && current_note->type == Note::LINEBREAK && (next(current_note)->position - scroll_to.x) * scale.x > track_size.x) {
       scroll_to.x = next(current_note)->position - 4;
     }
     scroll_to.x = min(scroll_to.x, prev(notes.end())->position + prev(notes.end())->length + 4.f);
+  }
+  if ((current_note->position - scroll_to.x) * scale.x < 0) {
+    scroll_to.x = current_note->position - 4;
   }
   if (current_note->type != Note::LINEBREAK && abs(current_note->pitch - scroll_to.y) * scale.y + scale.y > track_size.y) {
     scroll_to.y = (scroll_to.y + current_note->pitch) / 2;
