@@ -109,7 +109,7 @@ int main(int argc, char* argv[]) {
     delta = c.restart().asSeconds();
 
     Vector2i mouse_pos = Mouse::getPosition(win);
-    Vector2u win_size = win.getSize();
+    Vector2i win_size = Vector2i(win.getSize());
     Vector2f scale_vec((64 / (song.bpm / 60.f)) * scale, 64 * scale * 0.25);
 
     win.clear(ResourceManager::color("background"));
