@@ -30,6 +30,7 @@ class Song {
     audiere::OutputStreamPtr stream;
     bool paused;
     sol::state lua;
+    bool loaded;
   public:
     bool modified;
     std::string fname;
@@ -52,6 +53,8 @@ class Song {
     bool isPlaying() const;
     bool isPaused() const;
     bool isStopped() const;
+
+    bool isLoaded() const;
 
     void setPosition(sf::Time time);
     sf::Time getPosition() const;

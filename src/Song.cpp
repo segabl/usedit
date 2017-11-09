@@ -125,7 +125,6 @@ bool Song::loadFromFile(string fname) {
   }
 
   log(0, "Song file parsed successfully");
-  log(0, tags["ARTIST"] + " - " + tags["TITLE"] + ", BPM: " + toString(bpm) + ", GAP: " + toString(gap));
 
   string soundfile = regex_replace(fname, regex(R"([^/\\]+$)"), tags["MP3"]);
   SampleSourcePtr source = OpenSampleSource(soundfile.c_str());
@@ -150,6 +149,7 @@ bool Song::loadFromFile(string fname) {
       log(2, "Could not open \"" + coverfile + "\"!");
     }
   }
+  loaded = true;
   this->fname = fname;
   return true;
 }
@@ -202,6 +202,7 @@ void Song::clear() {
   stop();
   modified = false;
   fname = "";
+  loaded = false;
   sample_rate = 44100;
   stream = nullptr;
   paused = false;
@@ -248,6 +249,10 @@ bool Song::isPaused() const {
 
 bool Song::isStopped() const {
   return !isPaused() && !isPlaying();
+}
+
+bool Song::isLoaded() const {
+  return loaded;
 }
 
 void Song::setPosition(Time time) {
