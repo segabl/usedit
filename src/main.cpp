@@ -17,6 +17,7 @@
 #include <memory>
 #include <cassert>
 #include <cmath>
+#include <cstdio>
 #include <regex>
 #include <vector>
 
@@ -43,7 +44,6 @@ int main(int argc, char* argv[]) {
   Vector2f render_size(win.getSize().x, (win.getSize().y - INTERFACE_HEIGHT - STATUS_HEIGHT));
 
   Song song;
-  bool song_loaded = false;
   ToneGenerator tone_generator(0);
 
   map<int, TrackHandlerPtr> track_handlers;
@@ -56,9 +56,12 @@ int main(int argc, char* argv[]) {
   bottom_elements.push_back(&list_file);
 
   Button button_load(Text("Open", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT));
+  Button button_reload(Text("Reload", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT));
+  button_reload.setEnabled(false);
   Button button_save(Text("Save", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT));
   button_save.setEnabled(false);
   list_file.addElement(&button_save);
+  list_file.addElement(&button_reload);
   list_file.addElement(&button_load);
 
   DropdownList list_functions(Text("Functions", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT), DropdownList::UP);
@@ -80,16 +83,17 @@ int main(int argc, char* argv[]) {
   }
 
   function<void(string)> loadSong = [&](string fname) {
-    song_loaded = song.loadFromFile(fname);
-    if (song_loaded) {
+    bool loaded = song.loadFromFile(fname);
+    if (loaded) {
       render_size = Vector2f(win.getSize().x, (win.getSize().y - INTERFACE_HEIGHT - SEEK_HEIGHT - STATUS_HEIGHT) / song.note_tracks.size());
       for (auto track : song.note_tracks) {
         track_handlers[track.first].reset(new TrackHandler(&song, track.first, render_size));
       }
       song.play();
     }
-    list_functions.setEnabled(song_loaded && !function_elements.empty());
-    button_save.setEnabled(song_loaded);
+    list_functions.setEnabled(loaded && !function_elements.empty());
+    button_save.setEnabled(loaded);
+    button_reload.setEnabled(loaded);
   };
 
   button_load.setCallback([&](Element*) {
@@ -99,8 +103,16 @@ int main(int argc, char* argv[]) {
     }
   });
 
-  button_save.setCallback([&](Element*){
-    song.saveToFile(song.fname + ".new.txt");
+  button_reload.setCallback([&](Element*) {
+    loadSong(song.fname);
+  });
+
+  button_save.setCallback([&](Element*) {
+    if (rename(song.fname.c_str(), (song.fname + ".backup").c_str()) == 0) {
+      song.saveToFile(song.fname);
+    } else {
+      log(2, "Could not backup old song file!");
+    }
   });
 
   if (argc > 1) {
@@ -118,12 +130,12 @@ int main(int argc, char* argv[]) {
 
     win.clear(ResourceManager::color("background"));
 
-    if (song_loaded) {
+    if (song.isLoaded()) {
       float offset = 0;
       RectangleShape r(Vector2f(win_size.x, 2));
       r.setFillColor(ResourceManager::color("interface"));
       for (auto track : song.note_tracks) {
-        track_handlers[track.first]->update(delta, scale_vec, Vector2i(mouse_pos.x, mouse_pos.y - INTERFACE_HEIGHT - offset), !gui::Element::focusedElement());
+        track_handlers[track.first]->update(delta, scale_vec, Vector2i(mouse_pos.x, mouse_pos.y - INTERFACE_HEIGHT - offset), false);
         Sprite s(track_handlers[track.first]->getTexture());
         s.setPosition(0, INTERFACE_HEIGHT + offset);
         win.draw(s);
@@ -150,8 +162,9 @@ int main(int argc, char* argv[]) {
     r.setOutlineThickness(0);
     r.setPosition(0, win_size.y - STATUS_HEIGHT - SEEK_HEIGHT);
     win.draw(r);
-    if (mouse_pos.y > win_size.y - STATUS_HEIGHT - SEEK_HEIGHT && mouse_pos.y < win_size.y - STATUS_HEIGHT && Mouse::isButtonPressed(Mouse::Button::Left)) {
-      song.setPosition(seconds(song.length().asSeconds() * ((float)mouse_pos.x / win_size.x)));
+    if (win.hasFocus() && !gui::Element::focusedElement() &&
+        mouse_pos.y > win_size.y - STATUS_HEIGHT - SEEK_HEIGHT && mouse_pos.y < win_size.y - STATUS_HEIGHT && Mouse::isButtonPressed(Mouse::Button::Left)) {
+      song.setPosition(seconds(song.length().asSeconds() * ((float) mouse_pos.x / win_size.x)));
     }
 
     r.setSize(Vector2f(INTERFACE_HEIGHT - 16, INTERFACE_HEIGHT - 16));
@@ -161,7 +174,7 @@ int main(int argc, char* argv[]) {
     r.setOutlineThickness(0);
     win.draw(r);
 
-    Text t(song_loaded ? song.tags["ARTIST"] : "No song loaded", ResourceManager::font("default"), 32);
+    Text t(song.isLoaded() ? song.tags["ARTIST"] : "No song loaded", ResourceManager::font("default"), 32);
     t.setPosition(8 + INTERFACE_HEIGHT, INTERFACE_HEIGHT * 0.5 - 32 - 8);
     win.draw(t);
     t.setString(song.tags["TITLE"]);
@@ -190,7 +203,9 @@ int main(int argc, char* argv[]) {
     for (size_t i = 0; i < bottom_elements.size(); i++) {
       bottom_elements[i]->setPosition(win_size.x / max((size_t) 8, bottom_elements.size()) * i, win_size.y - STATUS_HEIGHT);
       bottom_elements[i]->setSize(win_size.x / max((size_t) 8, bottom_elements.size()), STATUS_HEIGHT);
-      bottom_elements[i]->update(mouse_pos);
+      if (win.hasFocus()) {
+        bottom_elements[i]->update(mouse_pos);
+      }
       win.draw(*bottom_elements[i]);
     }
 
@@ -204,7 +219,7 @@ int main(int argc, char* argv[]) {
           win.close();
           break;
         case Event::Resized: {
-          render_size = Vector2f(e.size.width, (e.size.height - INTERFACE_HEIGHT - SEEK_HEIGHT - STATUS_HEIGHT) / max((int)song.note_tracks.size(), 1));
+          render_size = Vector2f(e.size.width, (e.size.height - INTERFACE_HEIGHT - SEEK_HEIGHT - STATUS_HEIGHT) / max((int) song.note_tracks.size(), 1));
           for (auto track : song.note_tracks) {
             track_handlers[track.first]->resize(render_size);
           }
@@ -218,11 +233,11 @@ int main(int argc, char* argv[]) {
         case Event::KeyPressed:
           switch (e.key.code) {
             case Keyboard::P:
-              if (song_loaded) {
+              if (song.isLoaded()) {
                 if (song.isPlaying()) {
                   song.pause();
                 } else {
-                  if (!song.isPaused()) {
+                  if (!song.isPaused() && song.getPosition() >= song.length()) {
                     song.setPosition(Time::Zero);
                   }
                   song.play();
