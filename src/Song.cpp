@@ -76,6 +76,7 @@ bool Song::loadFromFile(string fname) {
     log(2, "Could not open \"" + fname + "\"!");
     return false;
   }
+  log(0, "Opened \"" + fname + "\"");
 
   int player = 0;
 
@@ -136,7 +137,7 @@ bool Song::loadFromFile(string fname) {
       stream = OpenSound(audio_device, source, true);
       setPosition(seconds(start));
     }
-    log(0, "Song audio file loaded");
+    log(0, "Audio file opened for streaming");
   } else {
     log(2, "Could not open \"" + soundfile + "\"!");
     clear();
