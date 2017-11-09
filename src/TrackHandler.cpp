@@ -83,18 +83,25 @@ void TrackHandler::update(float delta, Vector2f scale, Vector2i mouse_pos, bool 
     tone_generator.play(current_note->pitch, seconds(BEATS_TO_SECONDS(current_note->length - song_pos + current_note->position, song->bpm));
   }
 
+  bool find_line_start = false;
   while (current_note != notes.begin() && song_pos < prev(current_note)->position + prev(current_note)->length) {
     current_note--;
     if (current_note->type == Note::LINEBREAK) {
-      current_line_start = next(current_note);
+      find_line_start = true;
     }
-    scroll_to.x = current_note->position - 4;
   }
   while (next(current_note) != notes.end() && song_pos > current_note->position + current_note->length) {
     current_note++;
     if (current_note->type == Note::LINEBREAK) {
       current_line_start = next(current_note);
     }
+  }
+  if (find_line_start) {
+    current_line_start = current_note;
+    while (current_line_start != notes.begin() && prev(current_line_start)->type != Note::LINEBREAK) {
+      current_line_start--;
+    }
+    scroll_to.x = current_line_start->position - 4;
   }
 
   Vector2f track_size(texture.getSize().x, texture.getSize().y);
