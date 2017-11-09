@@ -36,6 +36,7 @@ class ToneGenerator {
     ~ToneGenerator();
     void setVolume(float volume);
     void play(int pitch, sf::Time time = sf::Time::Zero);
+    void stop();
     bool isPlaying();
 };
 

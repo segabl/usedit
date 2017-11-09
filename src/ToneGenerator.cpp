@@ -73,6 +73,14 @@ void ToneGenerator::play(int pitch, Time time) {
   mtx.unlock();
 }
 
+void ToneGenerator::stop() {
+  mtx.lock();
+  if (stream) {
+    stream->stop();
+  }
+  mtx.unlock();
+}
+
 bool ToneGenerator::isPlaying() {
   return stream && stream->isPlaying();
 }
