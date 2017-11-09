@@ -18,7 +18,7 @@ for _, track in pairs(song.tracks) do
       line_start = false
     end
     next_note = i < #track and track[i + 1]
-    if next_note and next_note.type == NoteType.LINEBREAK and note.lyrics:len() > 1 then
+    if (not next_note or next_note.type == NoteType.LINEBREAK) and note.lyrics:len() > 1 then
       new_lyrics = note.lyrics:gsub("[.,;]$", "")
       if new_lyrics ~= note.lyrics then
         note.lyrics = new_lyrics
