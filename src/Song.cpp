@@ -99,6 +99,7 @@ bool Song::loadFromFile(string fname) {
   } else if (regex_search(line, match, regex(R"(^([:F\*]) (-?[0-9]+) ([0-9]+) (-?[0-9]+) (.*))", regex::icase))) {
       // Notes
       Note::Type t = match.str(1) == "F" ? Note::FREESTYLE : (match.str(1) == "*" ? Note::GOLD : Note::DEFAULT);
+      has_golden_notes = has_golden_notes || t == Note::GOLD;
       note_tracks[player].push_back(Note(t, toType<int>(match.str(2)), toType<int>(match.str(3)), toType<int>(match.str(4)), match.str(5)));
     } else if (regex_search(line, match, regex(R"(^- ([0-9]+)(?: ([0-9]+))?)", regex::icase))) {
     // Line break
@@ -204,6 +205,7 @@ void Song::clear() {
   modified = false;
   fname = "";
   loaded = false;
+  has_golden_notes = false;
   sample_rate = 44100;
   stream = nullptr;
   paused = false;
@@ -254,6 +256,10 @@ bool Song::isStopped() const {
 
 bool Song::isLoaded() const {
   return loaded;
+}
+
+bool Song::hasGoldenNotes() const {
+  return has_golden_notes;
 }
 
 void Song::setPosition(Time time) {

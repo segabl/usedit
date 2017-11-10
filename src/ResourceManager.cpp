@@ -24,6 +24,7 @@ bool ResourceManager::initializeResources(string directory) {
 
   textures["note"].loadFromFile(directory + "data/note.png");
   textures["no_cover"].loadFromFile(directory + "data/no_cover.png");
+  textures["icons"].loadFromFile(directory + "data/icons.png");
 
   fonts["lyrics"].loadFromFile(directory + "data/lyrics.ttf");
   fonts["default"].loadFromFile(directory + "data/default.ttf");

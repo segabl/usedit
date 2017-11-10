@@ -162,8 +162,8 @@ int main(int argc, char* argv[]) {
     r.setOutlineThickness(0);
     r.setPosition(0, win_size.y - STATUS_HEIGHT - SEEK_HEIGHT);
     win.draw(r);
-    if (win.hasFocus() && !gui::Element::focusedElement() &&
-        mouse_pos.y > win_size.y - STATUS_HEIGHT - SEEK_HEIGHT && mouse_pos.y < win_size.y - STATUS_HEIGHT && Mouse::isButtonPressed(Mouse::Button::Left)) {
+    if (win.hasFocus() && !gui::Element::focusedElement() && mouse_pos.y > win_size.y - STATUS_HEIGHT - SEEK_HEIGHT && mouse_pos.y < win_size.y - STATUS_HEIGHT
+        && Mouse::isButtonPressed(Mouse::Button::Left)) {
       song.setPosition(seconds(song.length().asSeconds() * ((float) mouse_pos.x / win_size.x)));
     }
 
@@ -175,12 +175,35 @@ int main(int argc, char* argv[]) {
     win.draw(r);
 
     Text t(song.isLoaded() ? song.tags["ARTIST"] : "No song loaded", ResourceManager::font("default"), 32);
-    t.setPosition(8 + INTERFACE_HEIGHT, INTERFACE_HEIGHT * 0.5 - 32 - 8);
+    t.setPosition(8 + INTERFACE_HEIGHT, INTERFACE_HEIGHT * 0.5 - 48 - 8);
     win.draw(t);
     t.setString(song.tags["TITLE"]);
     t.setCharacterSize(24);
-    t.setPosition(8 + INTERFACE_HEIGHT, INTERFACE_HEIGHT * 0.5 + 8);
+    t.setPosition(8 + INTERFACE_HEIGHT, INTERFACE_HEIGHT * 0.5 - 16);
     win.draw(t);
+
+    r.setTexture(&ResourceManager::texture("icons"), true);
+    // Has golden notes
+    r.setSize(Vector2f(32, 32));
+    r.setPosition(8 + INTERFACE_HEIGHT, INTERFACE_HEIGHT * 0.5 + 20);
+    r.setFillColor(Color(255, 255, 255, 55 + 200 * song.hasGoldenNotes()));
+    r.setTextureRect(IntRect(0, 0, 64, 64));
+    win.draw(r);
+    // Has background
+    r.setPosition(8 + INTERFACE_HEIGHT + 40, INTERFACE_HEIGHT * 0.5 + 20);
+    r.setFillColor(Color(255, 255, 255, 55 + 200 * !song.tags["BACKGROUND"].empty()));
+    r.setTextureRect(IntRect(64, 0, 64, 64));
+    win.draw(r);
+    // Has video
+    r.setPosition(8 + INTERFACE_HEIGHT + 40 * 2, INTERFACE_HEIGHT * 0.5 + 20);
+    r.setFillColor(Color(255, 255, 255, 55 + 200 * !song.tags["VIDEO"].empty()));
+    r.setTextureRect(IntRect(128, 0, 64, 64));
+    win.draw(r);
+    // Has medley
+    r.setPosition(8 + INTERFACE_HEIGHT + 40 * 3, INTERFACE_HEIGHT * 0.5 + 20);
+    r.setFillColor(Color(255, 255, 255, 55 + 200 * !song.tags["MEDLEYSTARTBEAT"].empty()));
+    r.setTextureRect(IntRect(192, 0, 64, 64));
+    win.draw(r);
 
     t.setString(toString(song.bpm));
     t.setCharacterSize(24);

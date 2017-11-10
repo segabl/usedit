@@ -31,6 +31,7 @@ class Song {
     bool paused;
     sol::state lua;
     bool loaded;
+    bool has_golden_notes;
   public:
     bool modified;
     std::string fname;
@@ -55,6 +56,8 @@ class Song {
     bool isStopped() const;
 
     bool isLoaded() const;
+
+    bool hasGoldenNotes() const;
 
     void setPosition(sf::Time time);
     sf::Time getPosition() const;
