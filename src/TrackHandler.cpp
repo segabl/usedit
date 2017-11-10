@@ -21,10 +21,11 @@
 using namespace sf;
 using namespace std;
 
-sf::Color TrackHandler::track_colors[] = { Color(70, 220, 255), // P1
-Color(70, 220, 255), // P1 duet
-Color(255, 100, 100) // P2 duet
-    };
+const sf::Color TrackHandler::track_colors[] = {
+    Color(70, 220, 255), // P1
+    Color(70, 220, 255), // P1 duet
+    Color(255, 100, 100) // P2 duet
+};
 
 void drawNote(RenderTarget& rt, NoteList::iterator note, Vector2f scale, Color blend) {
   Texture tex = ResourceManager::texture("note");
@@ -62,6 +63,12 @@ TrackHandler::TrackHandler(Song* song, int track_number, Vector2f size) :
     song(song), track_number(track_number), tone_generator(abs(track_number % 2)), view(FloatRect(0, 0, size.x, size.y)), notes(song->note_tracks[track_number]), current_note(
         notes.begin()), current_line_start(current_note), scroll_pos(current_note->position - 4, current_note->pitch), scroll_to(scroll_pos) {
   texture.create(size.x, size.y);
+  if (song->note_tracks.size() > 1) {
+    track_name = song->tags["P" + toString(track_number)];
+    if (track_name == "") {
+      track_name = "P" + toString(track_number);
+    }
+  }
 }
 
 TrackHandler::~TrackHandler() {
@@ -76,11 +83,15 @@ void TrackHandler::update(float delta, Vector2f scale, Vector2i mouse_pos, bool 
   texture.clear(ResourceManager::color("background"));
   RectangleShape rectangle;
 
-  float song_pos = SECONDS_TO_BEATS(song->getPosition().asSeconds() - song->gap / 1000.f, song->bpm);
+  float song_seconds = song->getPosition().asSeconds();
+  float song_pos = SECONDS_TO_BEATS(song_seconds - song->gap / 1000.f, song->bpm);
 
   if (song_pos >= current_note->position && song_pos < current_note->position + current_note->length && current_note->type != Note::FREESTYLE
       && current_note->type != Note::LINEBREAK && song->isPlaying() && !tone_generator.isPlaying()) {
     tone_generator.play(current_note->pitch, seconds(BEATS_TO_SECONDS(current_note->length - song_pos + current_note->position, song->bpm));
+  }
+  if (tone_generator.isPlaying() && !song->isPlaying()) {
+    tone_generator.stop();
   }
 
   bool find_line_start = false;
@@ -197,6 +208,12 @@ void TrackHandler::update(float delta, Vector2f scale, Vector2i mouse_pos, bool 
   for (auto t : lyric_list) {
     t.setPosition(track_size.x / 2 - width / 2 + t.getPosition().x, t.getPosition().y);
     texture.draw(t);
+  }
+  if (!track_name.empty()) {
+    Text p(track_name, ResourceManager::font("lyrics"), 24);
+    p.setFillColor(track_colors[abs(track_number % 3)]);
+    p.setPosition(8, 4);
+    texture.draw(p);
   }
 
   texture.display();

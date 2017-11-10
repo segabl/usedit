@@ -23,7 +23,7 @@ class Song;
 
 class TrackHandler {
   private:
-    static sf::Color track_colors[];
+    static const sf::Color track_colors[];
     Song* song;
     int track_number;
     ToneGenerator tone_generator;
@@ -34,6 +34,7 @@ class TrackHandler {
     NoteList::iterator current_line_start;
     sf::Vector2f scroll_pos;
     sf::Vector2f scroll_to;
+    std::string track_name;
   public:
     TrackHandler(Song* song, int track_number, sf::Vector2f size);
     ~TrackHandler();
