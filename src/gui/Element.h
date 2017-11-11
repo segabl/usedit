@@ -11,6 +11,7 @@
 #include <SFML/Graphics/Drawable.hpp>
 #include <SFML/Graphics/RenderStates.hpp>
 #include <SFML/Graphics/RenderTarget.hpp>
+#include <SFML/Graphics/RenderWindow.hpp>
 #include <SFML/Graphics/Transformable.hpp>
 #include <SFML/System/Vector2.hpp>
 #include <functional>
@@ -21,11 +22,12 @@ namespace gui {
     protected:
       static Element* focus;
       static Element* hover;
+      sf::RenderWindow* window;
       bool mouse_pressed;
       bool enabled;
       sf::Vector2f size;
       std::function<void(Element*)> callback;
-      Element();
+      Element(sf::RenderWindow* window, sf::Vector2f size, bool enabled = true, std::function<void(Element*)> callback = nullptr);
     public:
       static Element* focusedElement();
 
@@ -42,7 +44,7 @@ namespace gui {
       virtual void setSize(sf::Vector2f size);
       virtual void setSize(float x, float y);
 
-      virtual void update(sf::Vector2i mouse_pos);
+      virtual void update();
       virtual void draw(sf::RenderTarget& rt, sf::RenderStates rs) const;
   };
 

@@ -11,10 +11,8 @@
 
 #include "../ResourceManager.h"
 
-gui::Button::Button(sf::Text text, sf::Vector2f size, std::function<void(Element*)> callback) :
-    text(text) {
-  this->size = size;
-  this->callback = callback;
+gui::Button::Button(sf::RenderWindow* window, sf::Text text, sf::Vector2f size, bool enabled, std::function<void(Element*)> callback) :
+    gui::Element(window, size, enabled, callback), text(text) {
 }
 
 void gui::Button::setText(sf::Text text) {
@@ -25,8 +23,8 @@ sf::Text gui::Button::getText() const {
   return this->text;
 }
 
-void gui::Button::update(sf::Vector2i mouse_pos) {
-  gui::Element::update(mouse_pos);
+void gui::Button::update() {
+  gui::Element::update();
 
   sf::FloatRect bounds = text.getLocalBounds();
   text.setOrigin(bounds.width / 2 + bounds.left, bounds.height / 2 + bounds.top);

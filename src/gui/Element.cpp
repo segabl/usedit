@@ -16,8 +16,8 @@ gui::Element* gui::Element::focusedElement() {
   return focus;
 }
 
-gui::Element::Element() :
-    mouse_pressed(false), enabled(true), size(0, 0), callback(nullptr) {
+gui::Element::Element(sf::RenderWindow* window, sf::Vector2f size, bool enabled, std::function<void(Element*)> callback) :
+    window(window), mouse_pressed(false), enabled(enabled), size(size), callback(callback) {
 }
 
 bool gui::Element::isHovered() const {
@@ -56,13 +56,15 @@ void gui::Element::setSize(float x, float y) {
   this->size = sf::Vector2f(x, y);
 }
 
-void gui::Element::update(sf::Vector2i mouse_pos) {
+void gui::Element::update() {
   if (!enabled) {
     return;
   }
-  bool pressed = sf::Mouse::isButtonPressed(sf::Mouse::Left) != mouse_pressed && sf::Mouse::isButtonPressed(sf::Mouse::Left);
-  bool released = sf::Mouse::isButtonPressed(sf::Mouse::Left) != mouse_pressed && !sf::Mouse::isButtonPressed(sf::Mouse::Left);
-  mouse_pressed = sf::Mouse::isButtonPressed(sf::Mouse::Left);
+  sf::Vector2i mouse_pos = sf::Mouse::getPosition(*window);
+  bool window_focus = window->hasFocus();
+  bool pressed = window_focus && sf::Mouse::isButtonPressed(sf::Mouse::Left) != mouse_pressed && sf::Mouse::isButtonPressed(sf::Mouse::Left);
+  bool released = window_focus && sf::Mouse::isButtonPressed(sf::Mouse::Left) != mouse_pressed && !sf::Mouse::isButtonPressed(sf::Mouse::Left);
+  mouse_pressed = window_focus && sf::Mouse::isButtonPressed(sf::Mouse::Left);
 
   sf::FloatRect rect(getPosition().x - getOrigin().x, getPosition().y - getOrigin().y, getSize().x, getSize().y);
   if (rect.contains(mouse_pos.x, mouse_pos.y)) {

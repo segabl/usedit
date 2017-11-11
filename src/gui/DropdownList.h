@@ -25,7 +25,7 @@ namespace gui {
       Direction direction;
       bool show_list;
     public:
-      DropdownList(sf::Text text, sf::Vector2f size, Direction direction = DOWN);
+      DropdownList(sf::RenderWindow* window, sf::Text text, sf::Vector2f size, Direction direction = DOWN, bool enabled = true);
 
       virtual sf::Vector2f getSize() const;
       virtual void setSize(sf::Vector2f size);
@@ -37,7 +37,7 @@ namespace gui {
       virtual void addElement(Element* element);
       virtual void removeElement(Element* element);
 
-      virtual void update(sf::Vector2i mouse_pos);
+      virtual void update();
       virtual void draw(sf::RenderTarget& rt, sf::RenderStates rs) const;
   };
 

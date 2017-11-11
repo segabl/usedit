@@ -10,8 +10,8 @@
 #include <cmath>
 #include <SFML/Window/Mouse.hpp>
 
-gui::DropdownList::DropdownList(sf::Text text, sf::Vector2f size, gui::DropdownList::Direction direction) :
-    button(text, size, [&](Element*) {show_list = !show_list;}), direction(direction), show_list(false) {
+gui::DropdownList::DropdownList(sf::RenderWindow* window, sf::Text text, sf::Vector2f size, gui::DropdownList::Direction direction, bool enabled) :
+    gui::Element(window, size, enabled), button(window, text, size, enabled, [&](Element*) {show_list = !show_list;}), direction(direction), show_list(false) {
 }
 
 sf::Vector2f gui::DropdownList::getSize() const {
@@ -47,11 +47,13 @@ void gui::DropdownList::removeElement(Element* element) {
   }
 }
 
-void gui::DropdownList::update(sf::Vector2i mouse_pos) {
+void gui::DropdownList::update() {
   if (enabled) {
-    bool pressed = sf::Mouse::isButtonPressed(sf::Mouse::Left) != mouse_pressed && sf::Mouse::isButtonPressed(sf::Mouse::Left);
-    bool released = sf::Mouse::isButtonPressed(sf::Mouse::Left) != mouse_pressed && !sf::Mouse::isButtonPressed(sf::Mouse::Left);
-    mouse_pressed = sf::Mouse::isButtonPressed(sf::Mouse::Left);
+    sf::Vector2i mouse_pos = sf::Mouse::getPosition(*window);
+    bool window_focus = window->hasFocus();
+    bool pressed = window_focus && sf::Mouse::isButtonPressed(sf::Mouse::Left) != mouse_pressed && sf::Mouse::isButtonPressed(sf::Mouse::Left);
+    bool released = window_focus && sf::Mouse::isButtonPressed(sf::Mouse::Left) != mouse_pressed && !sf::Mouse::isButtonPressed(sf::Mouse::Left);
+    mouse_pressed = window_focus && sf::Mouse::isButtonPressed(sf::Mouse::Left);
 
     size = button.getSize();
     if (show_list) {
@@ -60,7 +62,7 @@ void gui::DropdownList::update(sf::Vector2i mouse_pos) {
         size.y += element->getSize().y;
         element->setPosition(getPosition() + element->getOrigin() + sf::Vector2f(0, size.y * (direction == UP ? -1 : 1) + button.getSize().y * (direction == UP ? 1 : -1)));
         element->setScale(getScale());
-        element->update(mouse_pos);
+        element->update();
       }
     }
 
@@ -75,7 +77,7 @@ void gui::DropdownList::update(sf::Vector2i mouse_pos) {
   button.setPosition(getPosition());
   button.setOrigin(getOrigin());
   button.setScale(getScale());
-  button.update(mouse_pos);
+  button.update();
 }
 
 void gui::DropdownList::draw(sf::RenderTarget& rt, sf::RenderStates rs) const {

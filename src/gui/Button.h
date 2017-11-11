@@ -21,12 +21,12 @@ namespace gui {
       sf::Text text;
       sf::RectangleShape rshape;
     public:
-      Button(sf::Text text, sf::Vector2f size, std::function<void(Element*)> callback = nullptr);
+      Button(sf::RenderWindow* window, sf::Text text, sf::Vector2f size, bool enabled = true, std::function<void(Element*)> callback = nullptr);
 
       virtual void setText(sf::Text text);
       virtual sf::Text getText() const;
 
-      virtual void update(sf::Vector2i mouse_pos);
+      virtual void update();
       virtual void draw(sf::RenderTarget& rt, sf::RenderStates rs) const;
   };
 
