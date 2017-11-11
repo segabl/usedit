@@ -3,8 +3,6 @@ local max = math.max
 
 local amount = 1 --the user should be prompted for this in the future
 
-local changes = 0
-
 local next_note, old_len
 for _, track in pairs(song.tracks) do
   for i, note in ipairs(track) do
@@ -16,12 +14,9 @@ for _, track in pairs(song.tracks) do
       if note.lyrics:sub(note.lyrics:len()) == " " or next_note.lyrics:sub(1, 1) == " " then
         old_len = note.length
         note.length = old_len - math.max(0, math.min(old_len - 1, amount - (next_note.position - note.position - old_len)))
-        if old_len ~= note.length then
-          changes = changes + 1
-        end
       end
     end
   end
 end
 
-log(0, "Changed " .. changes .. " note lengths")
+log(0, "Added minimum word gap of " .. amount)

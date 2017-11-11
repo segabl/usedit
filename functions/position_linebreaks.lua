@@ -19,4 +19,4 @@ for _, track in pairs(song.tracks) do
   end
 end
 
-log(0, "Changed " .. changes .. " line breaks")
+log(0, "Repositioned linebreaks at " .. (amount * 100) .. "% between notes")
