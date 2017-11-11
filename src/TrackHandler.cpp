@@ -200,8 +200,6 @@ void TrackHandler::update(float delta, Vector2f scale, Vector2i mouse_pos, bool 
       c = c * track_colors[abs(track_number % 3)];
     }
     t.setFillColor(c);
-    t.setOutlineColor(Color(c.r * 0.5, c.g * 0.5, c.b * 0.5, c.a * 0.5));
-    t.setOutlineThickness(1);
     lyric_list.push_back(t);
     width += t.getLocalBounds().width + t.getLocalBounds().left;
   }
