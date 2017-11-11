@@ -35,11 +35,19 @@ void gui::Button::update() {
   rshape.setPosition(getPosition());
   rshape.setOrigin(getOrigin());
   rshape.setScale(getScale());
-  sf::Color col = ResourceManager::color("interface");
-  col.r += (!isEnabled() || isFocused()) * -20 + (isHovered() && !isFocused()) * 20;
-  col.g += (!isEnabled() || isFocused()) * -20 + (isHovered() && !isFocused()) * 20;
-  col.b += (!isEnabled() || isFocused()) * -20 + (isHovered() && !isFocused()) * 20;
-  rshape.setFillColor(col);
+  if (!isEnabled()) {
+    text.setFillColor(settings.text.color.disabled);
+    rshape.setFillColor(settings.background.color.disabled);
+  } else if (isFocused()) {
+    text.setFillColor(settings.text.color.focused);
+    rshape.setFillColor(settings.background.color.focused);
+  } else if (isHovered()) {
+    text.setFillColor(settings.text.color.hovered);
+    rshape.setFillColor(settings.background.color.hovered);
+  } else {
+    text.setFillColor(settings.text.color.normal);
+    rshape.setFillColor(settings.background.color.normal);
+  }
 }
 
 void gui::Button::draw(sf::RenderTarget& rt, sf::RenderStates rs) const {

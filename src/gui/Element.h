@@ -18,6 +18,16 @@
 
 namespace gui {
 
+  struct Settings {
+      struct Params {
+          struct Colors {
+              sf::Color normal, hovered, focused, disabled;
+          };
+          Colors color;
+      };
+      Params text, background;
+  };
+
   class Element: public sf::Transformable, public sf::Drawable {
     protected:
       static Element* focus;
@@ -29,7 +39,10 @@ namespace gui {
       std::function<void(Element*)> callback;
       Element(sf::RenderWindow* window, sf::Vector2f size, bool enabled = true, std::function<void(Element*)> callback = nullptr);
     public:
+      static Settings default_settings;
       static Element* focusedElement();
+
+      Settings settings;
 
       bool isHovered() const;
       bool isFocused() const;

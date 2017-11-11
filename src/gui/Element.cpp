@@ -11,13 +11,31 @@
 
 gui::Element* gui::Element::focus = nullptr;
 gui::Element* gui::Element::hover = nullptr;
+gui::Settings gui::Element::default_settings = {
+    .text = gui::Settings::Params {
+        .color = gui::Settings::Params::Colors {
+            .normal = sf::Color::White,
+            .hovered = sf::Color::White,
+            .focused = sf::Color::White,
+            .disabled = sf::Color(255, 255, 255, 100)
+        }
+    },
+    .background = gui::Settings::Params {
+        .color = gui::Settings::Params::Colors {
+            .normal = sf::Color(90, 90, 90),
+            .hovered = sf::Color(120, 120, 120),
+            .focused = sf::Color(70, 70, 70),
+            .disabled = sf::Color(90, 90, 90)
+        }
+    }
+};
 
 gui::Element* gui::Element::focusedElement() {
   return focus;
 }
 
 gui::Element::Element(sf::RenderWindow* window, sf::Vector2f size, bool enabled, std::function<void(Element*)> callback) :
-    window(window), mouse_pressed(false), enabled(enabled), size(size), callback(callback) {
+    window(window), mouse_pressed(false), enabled(enabled), size(size), callback(callback), settings(default_settings) {
 }
 
 bool gui::Element::isHovered() const {
