@@ -21,6 +21,8 @@ std::string getOpenFile(std::string title);
 
 std::vector<std::string> findFiles(std::string path, std::string pattern = "");
 
+bool fileExists(std::string filename);
+
 std::vector<std::string> explode(std::string data, std::string delimiter);
 std::string implode(std::vector<std::string> data, std::string delimiter);
 

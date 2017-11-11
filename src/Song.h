@@ -32,6 +32,9 @@ class Song {
     sol::state lua;
     bool loaded;
     bool has_golden_notes;
+    bool has_background;
+    bool has_video;
+    bool has_medley;
   public:
     bool modified;
     std::string fname;
@@ -58,6 +61,9 @@ class Song {
     bool isLoaded() const;
 
     bool hasGoldenNotes() const;
+    bool hasBackground() const;
+    bool hasVideo() const;
+    bool hasMedley() const;
 
     void setPosition(sf::Time time);
     sf::Time getPosition() const;

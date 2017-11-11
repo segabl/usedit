@@ -30,8 +30,8 @@ using namespace gui;
 #define SEEK_HEIGHT           8
 #define STATUS_TEXT_SIZE      20
 
-typedef unique_ptr<TrackHandler> TrackHandlerPtr;
-typedef unique_ptr<Button> ButtonPtr;
+typedef shared_ptr<TrackHandler> TrackHandlerPtr;
+typedef shared_ptr<Element> ElementPtr;
 
 int main(int argc, char* argv[]) {
   string main_directory = regex_replace(regex_replace(argv[0], regex(R"([^/\\]+$)"), ""), regex(R"(\\)"), "/");
@@ -52,34 +52,31 @@ int main(int argc, char* argv[]) {
 
   vector<Element*> bottom_elements;
 
-  DropdownList list_file(Text("File", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT), DropdownList::UP);
+  DropdownList list_file(&win, Text("File", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT), DropdownList::UP);
   bottom_elements.push_back(&list_file);
 
-  Button button_load(Text("Open", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT));
-  Button button_reload(Text("Reload", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT));
-  button_reload.setEnabled(false);
-  Button button_save(Text("Save", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT));
-  button_save.setEnabled(false);
+  Button button_load(&win, Text("Open", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT));
+  Button button_reload(&win, Text("Reload", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT), false);
+  Button button_save(&win, Text("Save", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT), false);
   list_file.addElement(&button_save);
   list_file.addElement(&button_reload);
   list_file.addElement(&button_load);
 
-  DropdownList list_functions(Text("Functions", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT), DropdownList::UP);
-  list_functions.setEnabled(false);
+  DropdownList list_functions(&win, Text("Functions", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT), DropdownList::UP, false);
   bottom_elements.push_back(&list_functions);
   vector<string> files = findFiles(main_directory + "functions", R"(\.lua$)");
   sort(files.begin(), files.end());
   reverse(files.begin(), files.end());
-  vector<Element*> function_elements;
-  smatch match;
+  vector<ElementPtr> function_elements;
   for (auto file : files) {
+    smatch match;
     regex_search(file, match, std::regex(R"(.*?([^/\\]+)\.lua$)", std::regex::icase));
-    Button* button = new Button(Text(regex_replace(match.str(1), regex(R"(_)"), " "), ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(256, STATUS_HEIGHT));
+    ElementPtr button(new Button(&win, Text(regex_replace(match.str(1), regex(R"(_)"), " "), ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(256, STATUS_HEIGHT)));
     button->setCallback([&song,file](Element*) {
       song.executeLuaFile(file);
     });
     function_elements.push_back(button);
-    list_functions.addElement(button);
+    list_functions.addElement(button.get());
   }
 
   function<void(string)> loadSong = [&](string fname) {
@@ -108,11 +105,10 @@ int main(int argc, char* argv[]) {
   });
 
   button_save.setCallback([&](Element*) {
-    if (rename(song.fname.c_str(), (song.fname + ".backup").c_str()) == 0) {
-      song.saveToFile(song.fname);
-    } else {
-      log(2, "Could not backup old song file!");
+    if (rename(song.fname.c_str(), (song.fname + ".backup").c_str()) != 0) {
+      log(1, "Could not backup old song file!");
     }
+    song.saveToFile(song.fname);
   });
 
   if (argc > 1) {
@@ -174,10 +170,10 @@ int main(int argc, char* argv[]) {
     r.setOutlineThickness(0);
     win.draw(r);
 
-    Text t(song.isLoaded() ? song.tags["ARTIST"] : "No song loaded", ResourceManager::font("default"), 32);
+    Text t(song.isLoaded() ? song.tags["TITLE"] : "No song loaded", ResourceManager::font("default"), 32);
     t.setPosition(8 + INTERFACE_HEIGHT, INTERFACE_HEIGHT * 0.5 - 48 - 8);
     win.draw(t);
-    t.setString(song.tags["TITLE"]);
+    t.setString(song.tags["ARTIST"]);
     t.setCharacterSize(24);
     t.setPosition(8 + INTERFACE_HEIGHT, INTERFACE_HEIGHT * 0.5 - 16);
     win.draw(t);
@@ -191,17 +187,17 @@ int main(int argc, char* argv[]) {
     win.draw(r);
     // Has background
     r.setPosition(8 + INTERFACE_HEIGHT + 40, INTERFACE_HEIGHT * 0.5 + 20);
-    r.setFillColor(Color(255, 255, 255, 55 + 200 * !song.tags["BACKGROUND"].empty()));
+    r.setFillColor(Color(255, 255, 255, 55 + 200 * song.hasBackground()));
     r.setTextureRect(IntRect(64, 0, 64, 64));
     win.draw(r);
     // Has video
     r.setPosition(8 + INTERFACE_HEIGHT + 40 * 2, INTERFACE_HEIGHT * 0.5 + 20);
-    r.setFillColor(Color(255, 255, 255, 55 + 200 * !song.tags["VIDEO"].empty()));
+    r.setFillColor(Color(255, 255, 255, 55 + 200 * song.hasVideo()));
     r.setTextureRect(IntRect(128, 0, 64, 64));
     win.draw(r);
     // Has medley
     r.setPosition(8 + INTERFACE_HEIGHT + 40 * 3, INTERFACE_HEIGHT * 0.5 + 20);
-    r.setFillColor(Color(255, 255, 255, 55 + 200 * !song.tags["MEDLEYSTARTBEAT"].empty()));
+    r.setFillColor(Color(255, 255, 255, 55 + 200 * song.hasMedley()));
     r.setTextureRect(IntRect(192, 0, 64, 64));
     win.draw(r);
 
@@ -226,9 +222,7 @@ int main(int argc, char* argv[]) {
     for (size_t i = 0; i < bottom_elements.size(); i++) {
       bottom_elements[i]->setPosition(win_size.x / max((size_t) 8, bottom_elements.size()) * i, win_size.y - STATUS_HEIGHT);
       bottom_elements[i]->setSize(win_size.x / max((size_t) 8, bottom_elements.size()), STATUS_HEIGHT);
-      if (win.hasFocus()) {
-        bottom_elements[i]->update(mouse_pos);
-      }
+      bottom_elements[i]->update();
       win.draw(*bottom_elements[i]);
     }
 
@@ -288,10 +282,6 @@ int main(int argc, char* argv[]) {
           break;
       }
     }
-  }
-
-  for (auto element : function_elements) {
-    delete element;
   }
 
   return 0;

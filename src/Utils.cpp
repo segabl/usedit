@@ -9,6 +9,7 @@
 
 #include <ctime>
 #include <iomanip>
+#include <fstream>
 #include <iostream>
 #include <regex>
 #include <windows.h>
@@ -61,6 +62,10 @@ std::vector<std::string> findFiles(std::string path, std::string pattern) {
     closedir(dir);
   }
   return files;
+}
+
+bool fileExists(std::string filename) {
+  return std::ifstream(filename).good();
 }
 
 std::vector<std::string> explode(std::string data, std::string delimiter) {

@@ -128,7 +128,13 @@ bool Song::loadFromFile(string fname) {
 
   log(0, "Song file parsed successfully");
 
-  string soundfile = regex_replace(fname, regex(R"([^/\\]+$)"), tags["MP3"]);
+  string path = regex_replace(fname, regex(R"([^/\\]+$)"), "");
+
+  has_background = fileExists(path + tags["BACKGROUND"]);
+  has_video = fileExists(path + tags["VIDEO"]);
+  has_medley = !tags["MEDLEYSTARTBEAT"].empty();
+
+  string soundfile = path + tags["MP3"];
   SampleSourcePtr source = OpenSampleSource(soundfile.c_str());
   if (source) {
     int channel_count;
@@ -146,7 +152,7 @@ bool Song::loadFromFile(string fname) {
   }
 
   if (tags["COVER"] != "") {
-    string coverfile = regex_replace(fname, regex(R"([^/\\]+$)"), tags["COVER"]);
+    string coverfile = path + tags["COVER"];
     if (!cover.loadFromFile(coverfile)) {
       log(2, "Could not open \"" + coverfile + "\"!");
     }
@@ -206,6 +212,9 @@ void Song::clear() {
   fname = "";
   loaded = false;
   has_golden_notes = false;
+  has_background = false;
+  has_video = false;
+  has_medley = false;
   sample_rate = 44100;
   stream = nullptr;
   paused = false;
@@ -260,6 +269,18 @@ bool Song::isLoaded() const {
 
 bool Song::hasGoldenNotes() const {
   return has_golden_notes;
+}
+
+bool Song::hasBackground() const {
+  return has_background;
+}
+
+bool Song::hasVideo() const {
+  return has_video;
+}
+
+bool Song::hasMedley() const {
+  return has_medley;
 }
 
 void Song::setPosition(Time time) {
