@@ -169,15 +169,15 @@ bool Song::saveToFile(string fname) const {
     log(2, "Could not open \"" + fname + "\"!");
     return false;
   }
-  file << "#BPM:" << regex_replace(toString(bpm), regex(R"(\.)", regex::icase), ",") << endl;
-  file << "#GAP:" << regex_replace(toString(gap), regex(R"(\.)", regex::icase), ",") << endl;
-  if (start != 0) {
-    file << "#START:" << regex_replace(toString(start), regex(R"(\.)", regex::icase), ",") << endl;
-  }
   for (auto tag : tags) {
     if (tag.second != "") {
       file << "#" << tag.first << ":" << tag.second << endl;
     }
+  }
+  file << "#BPM:" << regex_replace(toString(bpm), regex(R"(\.)", regex::icase), ",") << endl;
+  file << "#GAP:" << regex_replace(toString(gap), regex(R"(\.)", regex::icase), ",") << endl;
+  if (start != 0) {
+    file << "#START:" << regex_replace(toString(start), regex(R"(\.)", regex::icase), ",") << endl;
   }
   for (auto track : note_tracks) {
     if (track.first != 0) {
