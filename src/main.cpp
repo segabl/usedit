@@ -34,9 +34,14 @@ using namespace gui;
 typedef shared_ptr<TrackHandler> TrackHandlerPtr;
 typedef shared_ptr<Element> ElementPtr;
 
+void setupLuaState(sol::state& lua);
+
 int main(int argc, char* argv[]) {
   string main_directory = regex_replace(regex_replace(argv[0], regex(R"([^/\\]+$)"), ""), regex(R"(\\)"), "/");
   ResourceManager::initializeResources(main_directory);
+
+  sol::state lua;
+  setupLuaState(lua);
 
   RenderWindow win(VideoMode(1280, 720), "USE");
   win.setFramerateLimit(0);
@@ -70,21 +75,22 @@ int main(int argc, char* argv[]) {
     smatch match;
     regex_search(file, match, std::regex(R"(.*?([^/\\]+)\.lua$)", std::regex::icase));
     ElementPtr button(new Button(win, Text(regex_replace(match.str(1), regex(R"(_)"), " "), ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(256, STATUS_HEIGHT)));
-    button->setCallback([&song,file](Element*) {
-      song.executeLuaFile(file);
+    button->setCallback([&song,&lua,file](Element*) {
+      song.executeLuaFile(lua, file);
     });
     function_elements.push_back(button);
     list_functions.addElement(button.get());
   }
 
   function<void(string)> loadSong = [&](string fname) {
+    track_handlers.clear();
     bool loaded = song.loadFromFile(fname);
     if (loaded) {
-      win.setTitle("USE - " + song.tags["ARTIST"] + " - " + song.tags["TITLE"]);
       render_size = Vector2f(win.getSize().x, (win.getSize().y - INTERFACE_HEIGHT - SEEK_HEIGHT - STATUS_HEIGHT) / song.note_tracks.size());
       for (auto track : song.note_tracks) {
         track_handlers[track.first].reset(new TrackHandler(&song, track.first, render_size));
       }
+      win.setTitle("USE - " + song.tags["ARTIST"] + " - " + song.tags["TITLE"]);
       song.play();
     } else {
       win.setTitle("USE");
@@ -131,9 +137,9 @@ int main(int argc, char* argv[]) {
       float offset = 0;
       RectangleShape r(Vector2f(win_size.x, 2));
       r.setFillColor(ResourceManager::color("interface"));
-      for (auto track : song.note_tracks) {
-        track_handlers[track.first]->update(delta, scale_vec, Vector2i(mouse_pos.x, mouse_pos.y - INTERFACE_HEIGHT - offset), false);
-        Sprite s(track_handlers[track.first]->getTexture());
+      for (auto track : track_handlers) {
+        track.second->update(delta, scale_vec, Vector2i(mouse_pos.x, mouse_pos.y - INTERFACE_HEIGHT - offset), false);
+        Sprite s(track.second->getTexture());
         s.setPosition(0, INTERFACE_HEIGHT + offset);
         win.draw(s);
         if (offset) {
@@ -287,4 +293,28 @@ int main(int argc, char* argv[]) {
   }
 
   return 0;
+}
+
+inline void setupLuaState(sol::state& lua) {
+  lua.open_libraries();
+  lua["log"] = static_cast<void (*)(int, std::string)>(log);
+  lua.new_usertype<Song>("Song",
+      "bpm", &Song::bpm,
+      "gap", &Song::gap,
+      "tracks", &Song::note_tracks
+  );
+  lua.new_usertype<Note>("Note",
+      sol::constructors<Note(Note::Type, int, int, int, std::string)>(),
+      "type", &Note::type,
+      "position", &Note::position,
+      "length", &Note::length,
+      "pitch", &Note::pitch,
+      "lyrics", &Note::lyrics
+  );
+  lua.new_enum("NoteType",
+      "LINEBREAK", Note::LINEBREAK,
+      "DEFAULT", Note::DEFAULT,
+      "FREESTYLE", Note::FREESTYLE,
+      "GOLD", Note::GOLD
+  );
 }

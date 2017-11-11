@@ -69,6 +69,7 @@ TrackHandler::TrackHandler(Song* song, int track_number, Vector2f size) :
       track_name = "P" + toString(track_number);
     }
   }
+  log(0, "Track handler " + toString(track_number) + " initialized");
 }
 
 TrackHandler::~TrackHandler() {

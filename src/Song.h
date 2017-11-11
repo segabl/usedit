@@ -29,7 +29,6 @@ class Song {
     int sample_rate;
     audiere::OutputStreamPtr stream;
     bool paused;
-    sol::state lua;
     bool loaded;
     bool has_golden_notes;
     bool has_background;
@@ -69,7 +68,7 @@ class Song {
     sf::Time getPosition() const;
     sf::Time length() const;
 
-    bool executeLuaFile(std::string fname);
+    bool executeLuaFile(sol::state& lua, std::string fname);
 };
 
 #endif /* SRC_SONG_H_ */

@@ -40,27 +40,6 @@ AudioDevicePtr Song::audio_device(OpenDevice());
 
 Song::Song() {
   clear();
-  lua.open_libraries();
-  lua["log"] = static_cast<void (*)(int, std::string)>(log);
-  lua.new_usertype<Song>("Song",
-      "bpm", &Song::bpm,
-      "gap", &Song::gap,
-      "tracks", &Song::note_tracks
-  );
-  lua.new_usertype<Note>("Note",
-      sol::constructors<Note(Note::Type, int, int, int, std::string)>(),
-      "type", &Note::type,
-      "position", &Note::position,
-      "length", &Note::length,
-      "pitch", &Note::pitch,
-      "lyrics", &Note::lyrics
-  );
-  lua.new_enum("NoteType",
-      "LINEBREAK", Note::LINEBREAK,
-      "DEFAULT", Note::DEFAULT,
-      "FREESTYLE", Note::FREESTYLE,
-      "GOLD", Note::GOLD
-  );
 }
 
 Song::~Song() {
@@ -109,9 +88,6 @@ bool Song::loadFromFile(string fname) {
         player = toType<int>(match.str(1));
       } else if (regex_search(line, match, regex(R"(^E)", regex::icase))) {
     // End of file
-    for (auto track: note_tracks) {
-      track.second.sort();
-    }
     file.close();
     break;
   } else {
@@ -127,6 +103,10 @@ bool Song::loadFromFile(string fname) {
   }
 
   log(0, "Song file parsed successfully");
+
+  for (auto track : note_tracks) {
+    track.second.sort();
+  }
 
   string path = regex_replace(fname, regex(R"([^/\\]+$)"), "");
 
@@ -303,8 +283,8 @@ Time Song::length() const {
   return Time();
 }
 
-bool Song::executeLuaFile(string fname) {
-  lua["song"] = this;
+bool Song::executeLuaFile(sol::state& lua, string fname) {
+  lua.set("song", this);
   try {
     lua.script_file(fname);
   } catch (sol::error &e) {
