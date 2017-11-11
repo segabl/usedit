@@ -8,7 +8,6 @@
 #ifndef SRC_GUI_BUTTON_H_
 #define SRC_GUI_BUTTON_H_
 
-#include <SFML/Graphics/RectangleShape.hpp>
 #include <SFML/Graphics/Text.hpp>
 #include <SFML/Graphics/Sprite.hpp>
 
@@ -19,9 +18,8 @@ namespace gui {
   class Button: public Element {
     protected:
       sf::Text text;
-      sf::RectangleShape rshape;
     public:
-      Button(sf::RenderWindow* window, sf::Text text, sf::Vector2f size, bool enabled = true, std::function<void(Element*)> callback = nullptr);
+      Button(sf::RenderWindow& window, sf::Text text, sf::Vector2f size, bool enabled = true);
 
       virtual void setText(sf::Text text);
       virtual sf::Text getText() const;

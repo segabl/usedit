@@ -45,34 +45,31 @@ int main(int argc, char* argv[]) {
   Vector2f render_size(win.getSize().x, (win.getSize().y - INTERFACE_HEIGHT - STATUS_HEIGHT));
 
   Song song;
-  ToneGenerator tone_generator(0);
-
   map<int, TrackHandlerPtr> track_handlers;
 
   float scale = 1;
 
-  vector<Element*> bottom_elements;
+  Container bottom_elements(win, 0);
 
-  DropdownList list_file(&win, Text("File", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT), DropdownList::UP);
-  bottom_elements.push_back(&list_file);
+  DropdownList list_file(win, Text("File", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT), DropdownList::UP);
+  bottom_elements.addElement(&list_file);
 
-  Button button_load(&win, Text("Open", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT));
-  Button button_reload(&win, Text("Reload", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT), false);
-  Button button_save(&win, Text("Save", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT), false);
-  list_file.addElement(&button_save);
-  list_file.addElement(&button_reload);
+  Button button_load(win, Text("Open", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT));
   list_file.addElement(&button_load);
+  Button button_reload(win, Text("Reload", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT), false);
+  list_file.addElement(&button_reload);
+  Button button_save(win, Text("Save", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT), false);
+  list_file.addElement(&button_save);
 
-  DropdownList list_functions(&win, Text("Functions", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT), DropdownList::UP, false);
-  bottom_elements.push_back(&list_functions);
+  DropdownList list_functions(win, Text("Functions", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT), DropdownList::UP, false);
+  bottom_elements.addElement(&list_functions);
+
   vector<string> files = findFiles(main_directory + "functions", R"(\.lua$)");
-  sort(files.begin(), files.end());
-  reverse(files.begin(), files.end());
   vector<ElementPtr> function_elements;
   for (auto file : files) {
     smatch match;
     regex_search(file, match, std::regex(R"(.*?([^/\\]+)\.lua$)", std::regex::icase));
-    ElementPtr button(new Button(&win, Text(regex_replace(match.str(1), regex(R"(_)"), " "), ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(256, STATUS_HEIGHT)));
+    ElementPtr button(new Button(win, Text(regex_replace(match.str(1), regex(R"(_)"), " "), ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(256, STATUS_HEIGHT)));
     button->setCallback([&song,file](Element*) {
       song.executeLuaFile(file);
     });
@@ -83,11 +80,14 @@ int main(int argc, char* argv[]) {
   function<void(string)> loadSong = [&](string fname) {
     bool loaded = song.loadFromFile(fname);
     if (loaded) {
+      win.setTitle("USE - " + song.tags["ARTIST"] + " - " + song.tags["TITLE"]);
       render_size = Vector2f(win.getSize().x, (win.getSize().y - INTERFACE_HEIGHT - SEEK_HEIGHT - STATUS_HEIGHT) / song.note_tracks.size());
       for (auto track : song.note_tracks) {
         track_handlers[track.first].reset(new TrackHandler(&song, track.first, render_size));
       }
       song.play();
+    } else {
+      win.setTitle("USE");
     }
     list_functions.setEnabled(loaded && !function_elements.empty());
     button_save.setEnabled(loaded);
@@ -220,12 +220,9 @@ int main(int argc, char* argv[]) {
     t.setPosition(win_size.x - t.getLocalBounds().width - 16, INTERFACE_HEIGHT / 2 + 4);
     win.draw(t);
 
-    for (size_t i = 0; i < bottom_elements.size(); i++) {
-      bottom_elements[i]->setPosition(win_size.x / max((size_t) 8, bottom_elements.size()) * i, win_size.y - STATUS_HEIGHT);
-      bottom_elements[i]->setSize(win_size.x / max((size_t) 8, bottom_elements.size()), STATUS_HEIGHT);
-      bottom_elements[i]->update();
-      win.draw(*bottom_elements[i]);
-    }
+    bottom_elements.setPosition(0, win_size.y - STATUS_HEIGHT);
+    bottom_elements.update();
+    win.draw(bottom_elements);
 
     win.display();
 

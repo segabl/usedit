@@ -9,6 +9,7 @@
 #define SRC_GUI_DROPDOWNLIST_H_
 
 #include "Button.h"
+#include "Container.h"
 
 #include <vector>
 
@@ -21,11 +22,10 @@ namespace gui {
       };
     private:
       Button button;
-      std::vector<Element*> elements;
+      Container container;
       Direction direction;
-      bool show_list;
     public:
-      DropdownList(sf::RenderWindow* window, sf::Text text, sf::Vector2f size, Direction direction = DOWN, bool enabled = true);
+      DropdownList(sf::RenderWindow& window, sf::Text text, sf::Vector2f size, Direction direction = DOWN, bool enabled = true);
 
       virtual sf::Vector2f getSize() const;
       virtual void setSize(sf::Vector2f size);

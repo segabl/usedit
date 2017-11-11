@@ -9,6 +9,7 @@
 #define SRC_GUI_ELEMENT_H_
 
 #include <SFML/Graphics/Drawable.hpp>
+#include <SFML/Graphics/RectangleShape.hpp>
 #include <SFML/Graphics/RenderStates.hpp>
 #include <SFML/Graphics/RenderTarget.hpp>
 #include <SFML/Graphics/RenderWindow.hpp>
@@ -35,20 +36,25 @@ namespace gui {
       sf::RenderWindow* window;
       bool mouse_pressed;
       bool enabled;
+      bool visible;
       sf::Vector2f size;
+      sf::RectangleShape rshape;
       std::function<void(Element*)> callback;
-      Element(sf::RenderWindow* window, sf::Vector2f size, bool enabled = true, std::function<void(Element*)> callback = nullptr);
+      Element(sf::RenderWindow& window, sf::Vector2f size, bool enabled = true);
     public:
       static Settings default_settings;
-      static Element* focusedElement();
-
       Settings settings;
+
+      static Element* focusedElement();
 
       bool isHovered() const;
       bool isFocused() const;
 
       bool isEnabled() const;
       void setEnabled(bool enabled);
+
+      bool isVisible() const;
+      void setVisible(bool visible);
 
       virtual std::function<void(Element*)> getCallback() const;
       virtual void setCallback(std::function<void(Element*)> callback);
