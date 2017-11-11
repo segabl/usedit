@@ -29,6 +29,7 @@ using namespace gui;
 #define STATUS_HEIGHT         32
 #define SEEK_HEIGHT           8
 #define STATUS_TEXT_SIZE      20
+#define ICON_TECTURE_SIZE     32
 
 typedef shared_ptr<TrackHandler> TrackHandlerPtr;
 typedef shared_ptr<Element> ElementPtr;
@@ -183,22 +184,22 @@ int main(int argc, char* argv[]) {
     r.setSize(Vector2f(32, 32));
     r.setPosition(8 + INTERFACE_HEIGHT, INTERFACE_HEIGHT * 0.5 + 20);
     r.setFillColor(Color(255, 255, 255, 55 + 200 * song.hasGoldenNotes()));
-    r.setTextureRect(IntRect(0, 0, 64, 64));
+    r.setTextureRect(IntRect(0, 0, ICON_TECTURE_SIZE, ICON_TECTURE_SIZE));
     win.draw(r);
     // Has background
     r.setPosition(8 + INTERFACE_HEIGHT + 40, INTERFACE_HEIGHT * 0.5 + 20);
     r.setFillColor(Color(255, 255, 255, 55 + 200 * song.hasBackground()));
-    r.setTextureRect(IntRect(64, 0, 64, 64));
+    r.setTextureRect(IntRect(ICON_TECTURE_SIZE, 0, ICON_TECTURE_SIZE, ICON_TECTURE_SIZE));
     win.draw(r);
     // Has video
     r.setPosition(8 + INTERFACE_HEIGHT + 40 * 2, INTERFACE_HEIGHT * 0.5 + 20);
     r.setFillColor(Color(255, 255, 255, 55 + 200 * song.hasVideo()));
-    r.setTextureRect(IntRect(128, 0, 64, 64));
+    r.setTextureRect(IntRect(ICON_TECTURE_SIZE * 2, 0, ICON_TECTURE_SIZE, ICON_TECTURE_SIZE));
     win.draw(r);
     // Has medley
     r.setPosition(8 + INTERFACE_HEIGHT + 40 * 3, INTERFACE_HEIGHT * 0.5 + 20);
     r.setFillColor(Color(255, 255, 255, 55 + 200 * song.hasMedley()));
-    r.setTextureRect(IntRect(192, 0, 64, 64));
+    r.setTextureRect(IntRect(ICON_TECTURE_SIZE * 3, 0, ICON_TECTURE_SIZE, ICON_TECTURE_SIZE));
     win.draw(r);
 
     t.setString(toString(song.bpm));
@@ -263,15 +264,19 @@ int main(int argc, char* argv[]) {
               break;
             case Keyboard::Num9:
               song.gap -= e.key.shift ? 10 : 1;
+              song.gap = floor(song.gap);
               break;
             case Keyboard::Num0:
               song.gap += e.key.shift ? 10 : 1;
+              song.gap = floor(song.gap);
               break;
             case Keyboard::LBracket:
               song.bpm -= e.key.shift ? 1 : 0.1f;
+              song.bpm = floor(song.bpm * 10) / 10;
               break;
             case Keyboard::RBracket:
               song.bpm += e.key.shift ? 1 : 0.1f;
+              song.bpm = floor(song.bpm * 10) / 10;
               break;
             default:
               log(0, "Key pressed: " + toString(e.key.code));
