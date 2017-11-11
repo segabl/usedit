@@ -8,6 +8,7 @@ for _, track in pairs(song.tracks) do
     if note.type == NoteType.LINEBREAK then
       line_start = true
     elseif line_start then
+      note.lyrics = note.lyrics:gsub("^[.,; ]+", "")
       note.lyrics = note.lyrics:sub(1, 1):upper() .. note.lyrics:sub(2)
       line_start = false
     end
