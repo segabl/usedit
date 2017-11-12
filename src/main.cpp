@@ -11,6 +11,7 @@
 #include "TrackHandler.h"
 #include "Utils.h"
 #include "gui/DropdownList.h"
+#include "gui/Separator.h"
 
 #include <SFML/Graphics.hpp>
 
@@ -32,7 +33,7 @@ using namespace gui;
 #define ICON_TECTURE_SIZE     32
 
 typedef shared_ptr<TrackHandler> TrackHandlerPtr;
-typedef shared_ptr<Element> ElementPtr;
+typedef shared_ptr<GuiElement> GuiElementPtr;
 
 void setupLuaState(sol::state& lua);
 
@@ -51,10 +52,13 @@ int main(int argc, char* argv[]) {
 
   Song song;
   map<int, TrackHandlerPtr> track_handlers;
-
   float scale = 1;
 
+  GuiElement* pressed_gui_element = nullptr;
+
   Container bottom_elements(win, 0);
+
+  Separator separator(win, Vector2f(160, STATUS_HEIGHT * 0.25));
 
   DropdownList list_file(win, Text("File", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT), DropdownList::UP);
   bottom_elements.addElement(&list_file);
@@ -65,17 +69,23 @@ int main(int argc, char* argv[]) {
   list_file.addElement(&button_reload);
   Button button_save(win, Text("Save", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT), false);
   list_file.addElement(&button_save);
+  list_file.addElement(&separator);
+  Button button_quit(win, Text("Quit", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT));
+  list_file.addElement(&button_quit);
+
+  DropdownList list_edit(win, Text("Edit", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT), DropdownList::UP);
+  bottom_elements.addElement(&list_edit);
 
   DropdownList list_functions(win, Text("Functions", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT), DropdownList::UP, false);
   bottom_elements.addElement(&list_functions);
 
   vector<string> files = findFiles(main_directory + "functions", R"(\.lua$)");
-  vector<ElementPtr> function_elements;
+  vector<GuiElementPtr> function_elements;
   for (auto file : files) {
     smatch match;
     regex_search(file, match, std::regex(R"(.*?([^/\\]+)\.lua$)", std::regex::icase));
-    ElementPtr button(new Button(win, Text(regex_replace(match.str(1), regex(R"(_)"), " "), ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(256, STATUS_HEIGHT)));
-    button->setCallback([&song,&lua,file](Element*) {
+    GuiElementPtr button(new Button(win, Text(regex_replace(match.str(1), regex(R"(_)"), " "), ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(256, STATUS_HEIGHT)));
+    button->addCallback(sf::Event::MouseButtonReleased, sf::Mouse::Left, [&song,&lua,file]() {
       song.executeLuaFile(lua, file);
     });
     function_elements.push_back(button);
@@ -100,22 +110,26 @@ int main(int argc, char* argv[]) {
     button_reload.setEnabled(loaded);
   };
 
-  button_load.setCallback([&](Element*) {
+  button_load.addCallback(sf::Event::MouseButtonReleased, sf::Mouse::Left, [&]() {
     string fname = getOpenFile("Select a file");
     if (fname != "") {
       loadSong(fname);
     }
   });
 
-  button_reload.setCallback([&](Element*) {
+  button_reload.addCallback(sf::Event::MouseButtonReleased, sf::Mouse::Left, [&]() {
     loadSong(song.fname);
   });
 
-  button_save.setCallback([&](Element*) {
+  button_save.addCallback(sf::Event::MouseButtonReleased, sf::Mouse::Left, [&]() {
     if (rename(song.fname.c_str(), (song.fname + ".backup").c_str()) != 0) {
       log(1, "Could not backup old song file!");
     }
     song.saveToFile(song.fname);
+  });
+
+  button_quit.addCallback(sf::Event::MouseButtonReleased, sf::Mouse::Left, [&]() {
+    win.close();
   });
 
   if (argc > 1) {
@@ -138,7 +152,7 @@ int main(int argc, char* argv[]) {
       RectangleShape r(Vector2f(win_size.x, 2));
       r.setFillColor(ResourceManager::color("interface"));
       for (auto track : track_handlers) {
-        track.second->update(delta, scale_vec, Vector2i(mouse_pos.x, mouse_pos.y - INTERFACE_HEIGHT - offset), false);
+        track.second->update(delta, scale_vec, Vector2i(mouse_pos.x, mouse_pos.y - INTERFACE_HEIGHT - offset), !pressed_gui_element);
         Sprite s(track.second->getTexture());
         s.setPosition(0, INTERFACE_HEIGHT + offset);
         win.draw(s);
@@ -165,8 +179,8 @@ int main(int argc, char* argv[]) {
     r.setOutlineThickness(0);
     r.setPosition(0, win_size.y - STATUS_HEIGHT - SEEK_HEIGHT);
     win.draw(r);
-    if (win.hasFocus() && !gui::Element::focusedElement() && mouse_pos.y > win_size.y - STATUS_HEIGHT - SEEK_HEIGHT && mouse_pos.y < win_size.y - STATUS_HEIGHT
-        && Mouse::isButtonPressed(Mouse::Button::Left)) {
+    if (win.hasFocus() && mouse_pos.y > win_size.y - STATUS_HEIGHT - SEEK_HEIGHT && mouse_pos.y < win_size.y - STATUS_HEIGHT
+        && Mouse::isButtonPressed(Mouse::Button::Left) && !pressed_gui_element) {
       song.setPosition(seconds(song.length().asSeconds() * ((float) mouse_pos.x / win_size.x)));
     }
 
@@ -234,7 +248,7 @@ int main(int argc, char* argv[]) {
 
     // Event Logic
     Event e;
-    if (win.pollEvent(e)) {
+    while (win.pollEvent(e)) {
       switch (e.type) {
         case Event::Closed:
           win.close();
@@ -247,6 +261,13 @@ int main(int argc, char* argv[]) {
           win.setView(View(FloatRect(0, 0, e.size.width, e.size.height)));
           break;
         }
+        case Event::MouseButtonPressed:
+        case Event::MouseButtonReleased:
+        case Event::MouseMoved:
+          if (win.hasFocus()) {
+            pressed_gui_element = GuiElement::handleMouseEvent(e);
+          }
+          break;
         case Event::MouseWheelMoved:
           scale += 0.25 * e.mouseWheel.delta;
           scale = max(0.25f, scale);
@@ -297,24 +318,9 @@ int main(int argc, char* argv[]) {
 
 inline void setupLuaState(sol::state& lua) {
   lua.open_libraries();
-  lua["log"] = static_cast<void (*)(int, std::string)>(log);
-  lua.new_usertype<Song>("Song",
-      "bpm", &Song::bpm,
-      "gap", &Song::gap,
-      "tracks", &Song::note_tracks
-  );
-  lua.new_usertype<Note>("Note",
-      sol::constructors<Note(Note::Type, int, int, int, std::string)>(),
-      "type", &Note::type,
-      "position", &Note::position,
-      "length", &Note::length,
-      "pitch", &Note::pitch,
-      "lyrics", &Note::lyrics
-  );
-  lua.new_enum("NoteType",
-      "LINEBREAK", Note::LINEBREAK,
-      "DEFAULT", Note::DEFAULT,
-      "FREESTYLE", Note::FREESTYLE,
-      "GOLD", Note::GOLD
-  );
+  lua["log"] = static_cast<void (*)(int, std::string)>(log);lua
+  .new_usertype<Song>("Song", "bpm", &Song::bpm, "gap", &Song::gap, "tracks", &Song::note_tracks);
+  lua.new_usertype<Note>("Note", sol::constructors<Note(Note::Type, int, int, int, std::string)>(), "type", &Note::type, "position", &Note::position, "length", &Note::length,
+      "pitch", &Note::pitch, "lyrics", &Note::lyrics);
+  lua.new_enum("NoteType", "LINEBREAK", Note::LINEBREAK, "DEFAULT", Note::DEFAULT, "FREESTYLE", Note::FREESTYLE, "GOLD", Note::GOLD);
 }

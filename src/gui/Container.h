@@ -10,22 +10,21 @@
 
 #include <SFML/Graphics/RectangleShape.hpp>
 
-#include "Element.h"
-
 #include <vector>
+#include "GuiElement.h"
 
 namespace gui {
 
-  class Container: public Element {
+  class Container: public GuiElement {
     protected:
       unsigned columns;
-      std::vector<Element*> elements;
+      std::vector<GuiElement*> elements;
       void calculateSize();
     public:
-      Container(sf::RenderWindow& window, unsigned columns = 1, std::vector<Element*> elements = std::vector<Element*>(), bool enabled = true);
+      Container(sf::RenderWindow& window, unsigned columns = 1, bool enabled = true);
 
-      virtual void addElement(Element* element);
-      virtual void removeElement(Element* element);
+      virtual void addElement(GuiElement* element);
+      virtual void removeElement(GuiElement* element);
 
       virtual void setSize(sf::Vector2f size);
       virtual void setSize(float x, float y);

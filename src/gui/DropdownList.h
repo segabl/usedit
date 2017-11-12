@@ -15,7 +15,7 @@
 
 namespace gui {
 
-  class DropdownList: public Element {
+  class DropdownList: public GuiElement {
     public:
       enum Direction {
         DOWN, UP
@@ -34,8 +34,10 @@ namespace gui {
       virtual void setText(sf::Text text);
       virtual sf::Text getText() const;
 
-      virtual void addElement(Element* element);
-      virtual void removeElement(Element* element);
+      virtual void addElement(GuiElement* element);
+      virtual void removeElement(GuiElement* element);
+
+      virtual bool isInside(sf::Vector2f point) const;
 
       virtual void update();
       virtual void draw(sf::RenderTarget& rt, sf::RenderStates rs) const;

@@ -11,11 +11,11 @@
 #include <SFML/Graphics/Text.hpp>
 #include <SFML/Graphics/Sprite.hpp>
 
-#include "Element.h"
+#include "GuiElement.h"
 
 namespace gui {
 
-  class Button: public Element {
+  class Button: public GuiElement {
     protected:
       sf::Text text;
     public:
