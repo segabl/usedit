@@ -282,14 +282,3 @@ Time Song::length() const {
   }
   return Time();
 }
-
-bool Song::executeLuaFile(sol::state& lua, string fname) {
-  lua.set("song", this);
-  try {
-    lua.script_file(fname);
-  } catch (sol::error &e) {
-    log(2, e.what());
-    return false;
-  }
-  return true;
-}

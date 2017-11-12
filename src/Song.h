@@ -67,8 +67,6 @@ class Song {
     void setPosition(sf::Time time);
     sf::Time getPosition() const;
     sf::Time length() const;
-
-    bool executeLuaFile(sol::state& lua, std::string fname);
 };
 
 #endif /* SRC_SONG_H_ */
