@@ -7,16 +7,20 @@
 
 #include "DropdownList.h"
 
-#include <SFML/Window/Mouse.hpp>
-
 gui::DropdownList::DropdownList(sf::RenderWindow& window, sf::Text text, sf::Vector2f size, gui::DropdownList::Direction direction, bool enabled) :
     gui::GuiElement(window, size, enabled), button(window, text, size), container(window, 1), direction(direction) {
-  container.setVisible(false);
-  button.addCallback(sf::Event::MouseButtonPressed, sf::Mouse::Left, [&]() {
-    container.setVisible(!container.isVisible());
+  button.onMouseLeftPressed().connect([&]() {
+    container.setVisible(true);
   });
-  container.setParent(this);
   button.setParent(this);
+  container.setParent(this);
+  container.setVisible(false);
+  container.onActiveLost().connect([&]() {
+    container.setVisible(false);
+  });
+  container.onMouseLeftReleased().connect([&]() {
+    container.setVisible(false);
+  });
 }
 
 bool gui::DropdownList::isInside(sf::Vector2f point) const {
@@ -57,6 +61,7 @@ void gui::DropdownList::update() {
   }
   if (container.isVisible()) {
     button.setState(State::ACTIVE);
+    container.setState(State::ACTIVE);
   }
   button.setPosition(getPosition());
   button.setOrigin(getOrigin());

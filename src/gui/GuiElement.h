@@ -8,6 +8,8 @@
 #ifndef SRC_GUI_GUIELEMENT_H_
 #define SRC_GUI_GUIELEMENT_H_
 
+#include "Signal.h"
+
 #include <SFML/Graphics/Drawable.hpp>
 #include <SFML/Graphics/RectangleShape.hpp>
 #include <SFML/Graphics/RenderStates.hpp>
@@ -34,45 +36,42 @@ namespace gui {
       Params text, background;
   };
 
-  typedef std::function<void()> CallbackFunction;
-  class Callback {
-    public:
-      sf::Event::EventType type;
-      sf::Mouse::Button button;
-      CallbackFunction func;
-      void set(sf::Event::EventType type, sf::Mouse::Button button, CallbackFunction func) {
-        this->func = func;
-        this->type = type;
-        this->button = button;
-      }
-  };
-
   class GuiElement: public sf::Transformable, public sf::Drawable {
     public:
       enum State {
         DISABLED, NORMAL, FOCUS, ACTIVE
       };
     protected:
-      static GuiElement* pressed_element;
       static std::set<GuiElement*> elements;
+      static GuiElement* pressed_element;
+
       sf::RenderWindow* window;
       State state;
       bool visible;
       sf::Vector2f size;
       sf::RectangleShape background;
-      std::map<unsigned, Callback> callbacks;
-      unsigned callbacks_id;
       GuiElement* parent;
       GuiElement(sf::RenderWindow& window, sf::Vector2f size, bool enabled = true);
       virtual ~GuiElement();
       virtual bool isParentEnabled() const;
       virtual bool isParentVisible() const;
+      Signal signals[10];
     public:
       static Settings default_settings;
       Settings settings;
 
       static GuiElement* handleMouseEvent(sf::Event& event);
 
+      virtual Signal& onMouseLeftPressed();
+      virtual Signal& onMouseRightPressed();
+      virtual Signal& onMouseLeftReleased();
+      virtual Signal& onMouseRightReleased();
+      virtual Signal& onFocusGained();
+      virtual Signal& onFocusLost();
+      virtual Signal& onActiveGained();
+      virtual Signal& onActiveLost();
+
+      virtual GuiElement* getParent();
       virtual void setParent(GuiElement* parent);
 
       virtual State getState() const;
@@ -85,9 +84,6 @@ namespace gui {
       virtual void setVisible(bool visible);
 
       virtual bool isInside(sf::Vector2f point) const;
-
-      virtual unsigned addCallback(sf::Event::EventType type, sf::Mouse::Button button, CallbackFunction func);
-      virtual void removeCallback(unsigned id);
 
       virtual sf::Vector2f getSize() const;
       virtual void setSize(sf::Vector2f size);

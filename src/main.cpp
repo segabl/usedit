@@ -85,8 +85,12 @@ int main(int argc, char* argv[]) {
     smatch match;
     regex_search(file, match, std::regex(R"(.*?([^/\\]+)\.lua$)", std::regex::icase));
     GuiElementPtr button(new Button(win, Text(regex_replace(match.str(1), regex(R"(_)"), " "), ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(256, STATUS_HEIGHT)));
-    button->addCallback(sf::Event::MouseButtonReleased, sf::Mouse::Left, [&song,&lua,file]() {
-      song.executeLuaFile(lua, file);
+    button->onMouseLeftReleased().connect([=,&lua]() {
+      try {
+        lua.script_file(file);
+      } catch (sol::error &e) {
+        log(2, e.what());
+      }
     });
     function_elements.push_back(button);
     list_functions.addElement(button.get());
@@ -96,6 +100,7 @@ int main(int argc, char* argv[]) {
     track_handlers.clear();
     bool loaded = song.loadFromFile(fname);
     if (loaded) {
+      lua.set("song", &song);
       render_size = Vector2f(win.getSize().x, (win.getSize().y - INTERFACE_HEIGHT - SEEK_HEIGHT - STATUS_HEIGHT) / song.note_tracks.size());
       for (auto track : song.note_tracks) {
         track_handlers[track.first].reset(new TrackHandler(&song, track.first, render_size));
@@ -110,25 +115,25 @@ int main(int argc, char* argv[]) {
     button_reload.setEnabled(loaded);
   };
 
-  button_load.addCallback(sf::Event::MouseButtonReleased, sf::Mouse::Left, [&]() {
+  button_load.onMouseLeftReleased().connect([&]() {
     string fname = getOpenFile("Select a file");
     if (fname != "") {
       loadSong(fname);
     }
   });
 
-  button_reload.addCallback(sf::Event::MouseButtonReleased, sf::Mouse::Left, [&]() {
+  button_reload.onMouseLeftReleased().connect([&]() {
     loadSong(song.fname);
   });
 
-  button_save.addCallback(sf::Event::MouseButtonReleased, sf::Mouse::Left, [&]() {
+  button_save.onMouseLeftReleased().connect([&]() {
     if (rename(song.fname.c_str(), (song.fname + ".backup").c_str()) != 0) {
       log(1, "Could not backup old song file!");
     }
     song.saveToFile(song.fname);
   });
 
-  button_quit.addCallback(sf::Event::MouseButtonReleased, sf::Mouse::Left, [&]() {
+  button_quit.onMouseLeftReleased().connect([&]() {
     win.close();
   });
 
@@ -318,9 +323,15 @@ int main(int argc, char* argv[]) {
 
 inline void setupLuaState(sol::state& lua) {
   lua.open_libraries();
-  lua["log"] = static_cast<void (*)(int, std::string)>(log);lua
-  .new_usertype<Song>("Song", "bpm", &Song::bpm, "gap", &Song::gap, "tracks", &Song::note_tracks);
-  lua.new_usertype<Note>("Note", sol::constructors<Note(Note::Type, int, int, int, std::string)>(), "type", &Note::type, "position", &Note::position, "length", &Note::length,
-      "pitch", &Note::pitch, "lyrics", &Note::lyrics);
+  lua["log"] = static_cast<void (*)(int, std::string)>(log);
+  lua.new_usertype<Song>("Song", "bpm", &Song::bpm, "gap", &Song::gap, "tracks", &Song::note_tracks);
+  lua.new_usertype<Note>("Note",
+      sol::constructors<Note(Note::Type, int, int, int, std::string)>(),
+      "type", &Note::type,
+      "position", &Note::position,
+      "length", &Note::length,
+      "pitch", &Note::pitch,
+      "lyrics", &Note::lyrics
+  );
   lua.new_enum("NoteType", "LINEBREAK", Note::LINEBREAK, "DEFAULT", Note::DEFAULT, "FREESTYLE", Note::FREESTYLE, "GOLD", Note::GOLD);
 }
