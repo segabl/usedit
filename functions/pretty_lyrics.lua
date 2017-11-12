@@ -13,7 +13,7 @@ for _, track in pairs(song.tracks) do
       line_start = false
     end
     next_note = i < #track and track[i + 1]
-    if (not next_note or next_note.type == NoteType.LINEBREAK) and note.lyrics:len() > 1 then
+    if (not next_note or next_note.type == NoteType.LINEBREAK or next_note.lyrics:find("^~")) and note.lyrics:len() > 1 then
       note.lyrics = note.lyrics:gsub("[.,; ]+$", "")
     end
   end
