@@ -9,15 +9,8 @@ NAME = USEdit.exe
 CLEANCMD = del $(NAME) obj\*.o /s > nul 2>&1
 
 #default build
-all: $(NAME)
-
-$(NAME): $(OBJS)
-	g++ $(OBJS) -o $@ $(LDFLAGS)
-
-#special windows build to include exe information
-windows: $(OBJS)
-	windres src/resource.rc -O coff -o obj/resource.res
-	g++ $(OBJS) obj/resource.res -o $(NAME) $(LDFLAGS)
+all: $(OBJS)
+	g++ $(OBJS) -o $(NAME) $(LDFLAGS)
 
 obj/%.o: src/%.cpp
 	g++ -c $< -o $@ $(CFLAGS)
