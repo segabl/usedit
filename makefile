@@ -6,7 +6,7 @@ OBJS = $(SRC:src/%.cpp=obj/%.o)
 
 build_folders := $(shell mkdir obj\gui >nul 2>&1)
 NAME = USEdit.exe
-CLEANCMD = del obj\*.o /s > nul 2>&1
+CLEANCMD = del $(NAME) obj\*.o /s > nul 2>&1
 
 #default build
 all: $(NAME)
