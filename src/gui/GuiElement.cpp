@@ -12,9 +12,24 @@
 std::vector<gui::GuiElement*> gui::GuiElement::all_elements;
 gui::GuiElement* gui::GuiElement::active_element;
 
-gui::Settings gui::GuiElement::default_settings = { .text = gui::Params { .color = gui::Colors { .normal = sf::Color::White, .focus = sf::Color::White, .active = sf::Color::White,
-    .disabled = sf::Color(255, 255, 255, 100) } }, .background = gui::Params { .color = gui::Colors { .normal = sf::Color(90, 90, 90), .focus = sf::Color(120, 120, 120), .active =
-    sf::Color(70, 70, 70), .disabled = sf::Color(90, 90, 90) } } };
+gui::Settings gui::GuiElement::default_settings = {
+    .text = gui::Params {
+        .color = gui::Colors {
+            .normal = sf::Color::White,
+            .focus = sf::Color::White,
+            .active = sf::Color::White,
+            .disabled = sf::Color(255, 255, 255, 100)
+        }
+    },
+    .background = gui::Params {
+        .color = gui::Colors {
+            .normal = sf::Color(90, 90, 90),
+            .focus = sf::Color(120, 120, 120),
+            .active = sf::Color(70, 70, 70),
+            .disabled = sf::Color(90, 90, 90)
+        }
+    }
+};
 
 gui::GuiElement::GuiElement(sf::Vector2f size, bool enabled) :
     state(enabled ? State::NORMAL : State::DISABLED), visible(true), z(0), size(size), parent(nullptr), settings(default_settings) {
