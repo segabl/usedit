@@ -19,7 +19,7 @@ namespace gui {
     protected:
       sf::Text text;
     public:
-      Button(sf::RenderWindow& window, sf::Text text, sf::Vector2f size, bool enabled = true);
+      Button(sf::Text text, sf::Vector2f size, bool enabled = true);
 
       virtual void setText(sf::Text text);
       virtual sf::Text getText() const;

@@ -9,46 +9,28 @@
 
 #include <cmath>
 
-std::set<gui::GuiElement*> gui::GuiElement::elements;
-gui::GuiElement* gui::GuiElement::pressed_element;
+std::vector<gui::GuiElement*> gui::GuiElement::all_elements;
+gui::GuiElement* gui::GuiElement::active_element;
 
-gui::Settings gui::GuiElement::default_settings = {
-    .text = gui::Params {
-      .color = gui::Colors {
-        .normal = sf::Color::White,
-        .focus = sf::Color::White,
-        .active = sf::Color::White,
-        .disabled = sf::Color(255, 255, 255, 100)
-      }
-    },
-    .background = gui::Params {
-      .color = gui::Colors {
-        .normal = sf::Color(90, 90, 90),
-        .focus = sf::Color(120, 120, 120),
-        .active = sf::Color(70, 70, 70),
-        .disabled = sf::Color(90, 90, 90)
-      }
-    }
-};
+gui::Settings gui::GuiElement::default_settings = { .text = gui::Params { .color = gui::Colors { .normal = sf::Color::White, .focus = sf::Color::White, .active = sf::Color::White,
+    .disabled = sf::Color(255, 255, 255, 100) } }, .background = gui::Params { .color = gui::Colors { .normal = sf::Color(90, 90, 90), .focus = sf::Color(120, 120, 120), .active =
+    sf::Color(70, 70, 70), .disabled = sf::Color(90, 90, 90) } } };
 
-gui::GuiElement::GuiElement(sf::RenderWindow& window, sf::Vector2f size, bool enabled) :
-    window(&window), state(enabled ? State::NORMAL : State::DISABLED), visible(true), size(size), parent(nullptr), settings(default_settings) {
-  elements.insert(this);
+gui::GuiElement::GuiElement(sf::Vector2f size, bool enabled) :
+    state(enabled ? State::NORMAL : State::DISABLED), visible(true), z(0), size(size), parent(nullptr), settings(default_settings) {
+  all_elements.push_back(this);
 }
 
 gui::GuiElement::~GuiElement() {
-  elements.erase(this);
-  if (pressed_element == this) {
-    pressed_element = nullptr;
+  if (active_element == this) {
+    active_element = nullptr;
   }
-}
-
-gui::GuiElement* gui::GuiElement::getParent() {
-  return parent;
-}
-
-void gui::GuiElement::setParent(GuiElement* parent) {
-  this->parent = parent;
+  for (auto it = all_elements.begin(); it != all_elements.end(); it++) {
+    if (*it == this) {
+      all_elements.erase(it);
+      return;
+    }
+  }
 }
 
 bool gui::GuiElement::isParentEnabled() const {
@@ -57,6 +39,13 @@ bool gui::GuiElement::isParentEnabled() const {
 
 bool gui::GuiElement::isParentVisible() const {
   return !parent || parent->isVisible();
+}
+
+void gui::GuiElement::sortElements() {
+  auto comp = [](GuiElement* lhs, GuiElement* rhs) -> bool {
+    return lhs->getZ() < rhs->getZ();
+  };
+  std::sort(all_elements.begin(), all_elements.end(), comp);
 }
 
 gui::GuiElement* gui::GuiElement::handleMouseEvent(sf::Event& event) {
@@ -69,61 +58,81 @@ gui::GuiElement* gui::GuiElement::handleMouseEvent(sf::Event& event) {
     mouse_pos.y = event.mouseButton.y;
   }
 
+  sortElements();
+
   std::vector<Signal*> signals;
-  for (auto element : elements) {
-    if (!element->isEnabled() || !element->isVisible()) {
+  GuiElement* mouse_element = nullptr;
+  for (auto e : all_elements) {
+    if (!e->isEnabled() || !e->isVisible()) {
       continue;
     }
-    bool mouse_inside = element->isInside(mouse_pos);
-    State e_state = element->getState();
+    bool mouse_inside = e->isInside(mouse_pos);
+    State e_state = e->getState();
+
+    bool ignore = !mouse_element || e == mouse_element->getParent();
+
+    // Handle signals
     if (event.type == sf::Event::MouseButtonPressed) {
-      if (mouse_inside) {
+      if (mouse_inside && ignore) {
         if (event.mouseButton.button == sf::Mouse::Left) {
           if (e_state < State::ACTIVE) {
-            signals.push_back(&element->onActiveGained());
+            signals.push_back(&e->onActiveGained());
           }
-          signals.push_back(&element->onMouseLeftPressed());
+          signals.push_back(&e->onMouseLeftPressed());
         } else if (event.mouseButton.button == sf::Mouse::Right) {
-          signals.push_back(&element->onMouseRightPressed());
+          signals.push_back(&e->onMouseRightPressed());
         }
       } else if (e_state == State::ACTIVE) {
-        signals.push_back(&element->onActiveLost());
+        signals.push_back(&e->onActiveLost());
       }
     } else if (event.type == sf::Event::MouseButtonReleased) {
-      if (mouse_inside) {
+      if (mouse_inside && ignore) {
         if (event.mouseButton.button == sf::Mouse::Left) {
-          signals.push_back(&element->onMouseLeftReleased());
+          signals.push_back(&e->onMouseLeftReleased());
         } else if (event.mouseButton.button == sf::Mouse::Right) {
-          signals.push_back(&element->onMouseRightReleased());
+          signals.push_back(&e->onMouseRightReleased());
         }
       }
-    } else if (mouse_inside) {
+    } else if (mouse_inside && ignore) {
       if (e_state < State::FOCUS) {
-        signals.push_back(&element->onFocusGained());
+        signals.push_back(&e->onFocusGained());
       }
     } else {
       if (e_state >= State::FOCUS) {
-        signals.push_back(&element->onFocusLost());
+        signals.push_back(&e->onFocusLost());
       }
     }
 
+    // Update States
     if (mouse_inside && event.type != sf::Event::MouseButtonReleased) {
-      if (event.type == sf::Event::MouseButtonPressed || pressed_element) {
-        element->setState(State::ACTIVE);
-        pressed_element = element;
+      if (event.type == sf::Event::MouseButtonPressed || active_element) {
+        if (ignore) {
+          e->setState(State::ACTIVE);
+        }
+        active_element = e;
       }
-      element->setState(std::max(element->getState(), State::FOCUS));
+      if (ignore) {
+        e->setState(std::max(e->getState(), State::FOCUS));
+      } else {
+        e->setState(State::NORMAL);
+      }
     } else {
-      if ((event.type == sf::Event::MouseButtonPressed && pressed_element == element) || event.type == sf::Event::MouseButtonReleased) {
-        pressed_element = nullptr;
+      if ((event.type == sf::Event::MouseButtonPressed && active_element == e) || event.type == sf::Event::MouseButtonReleased) {
+        active_element = nullptr;
       }
-      element->setState(mouse_inside ? State::FOCUS : State::NORMAL);
+      e->setState(mouse_inside && ignore ? State::FOCUS : State::NORMAL);
+    }
+
+    if (mouse_inside && ignore) {
+      mouse_element = e;
     }
   }
+
   for (auto signal : signals) {
     signal->send();
   }
-  return pressed_element;
+
+  return mouse_element ? mouse_element : active_element;
 }
 
 Signal& gui::GuiElement::onMouseLeftPressed() {
@@ -156,6 +165,22 @@ Signal& gui::GuiElement::onActiveGained() {
 
 Signal& gui::GuiElement::onActiveLost() {
   return signals[7];
+}
+
+gui::GuiElement* gui::GuiElement::getParent() {
+  return parent;
+}
+
+void gui::GuiElement::setParent(GuiElement* parent) {
+  this->parent = parent;
+}
+
+int gui::GuiElement::getZ() {
+  return z;
+}
+
+void gui::GuiElement::setZ(int z) {
+  this->z = z;
 }
 
 gui::GuiElement::State gui::GuiElement::getState() const {

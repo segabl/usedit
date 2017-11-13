@@ -7,8 +7,8 @@
 
 #include "Separator.h"
 
-gui::Separator::Separator(sf::RenderWindow& window, sf::Vector2f size) :
-    gui::GuiElement(window, size, true) {
+gui::Separator::Separator(sf::Vector2f size) :
+    gui::GuiElement(size, true) {
 }
 
 void gui::Separator::update() {

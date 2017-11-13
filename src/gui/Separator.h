@@ -14,7 +14,7 @@ namespace gui {
 
   class Separator: public GuiElement {
     public:
-      Separator(sf::RenderWindow& window, sf::Vector2f size);
+      Separator(sf::Vector2f size);
 
       virtual void update();
       virtual void draw(sf::RenderTarget& rt, sf::RenderStates rs) const;

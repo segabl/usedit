@@ -11,8 +11,8 @@
 
 #include "../ResourceManager.h"
 
-gui::Button::Button(sf::RenderWindow& window, sf::Text text, sf::Vector2f size, bool enabled) :
-    gui::GuiElement(window, size, enabled), text(text) {
+gui::Button::Button(sf::Text text, sf::Vector2f size, bool enabled) :
+    gui::GuiElement(size, enabled), text(text) {
 }
 
 void gui::Button::setText(sf::Text text) {
@@ -27,7 +27,7 @@ void gui::Button::update() {
   if (!isVisible()) {
     return;
   }
-  gui::GuiElement::update();
+  GuiElement::update();
 
   sf::FloatRect bounds = text.getLocalBounds();
   text.setOrigin(bounds.width / 2 + bounds.left, bounds.height / 2 + bounds.top);

@@ -54,29 +54,29 @@ int main(int argc, char* argv[]) {
   map<int, TrackHandlerPtr> track_handlers;
   float scale = 1;
 
-  GuiElement* pressed_gui_element = nullptr;
+  GuiElement* mouse_over_gui_element = nullptr;
 
-  Container bottom_elements(win, 0);
+  Container bottom_elements(0);
 
-  Separator separator(win, Vector2f(160, STATUS_HEIGHT * 0.25));
+  Separator separator(Vector2f(160, STATUS_HEIGHT * 0.25));
 
-  DropdownList list_file(win, Text("File", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT), DropdownList::UP);
+  DropdownList list_file(Text("File", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT), DropdownList::UP);
   bottom_elements.addElement(&list_file);
 
-  Button button_load(win, Text("Open", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT));
+  Button button_load(Text("Open", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT));
   list_file.addElement(&button_load);
-  Button button_reload(win, Text("Reload", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT), false);
+  Button button_reload(Text("Reload", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT), false);
   list_file.addElement(&button_reload);
-  Button button_save(win, Text("Save", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT), false);
+  Button button_save(Text("Save", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT), false);
   list_file.addElement(&button_save);
   list_file.addElement(&separator);
-  Button button_quit(win, Text("Quit", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT));
+  Button button_quit(Text("Quit", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT));
   list_file.addElement(&button_quit);
 
-  DropdownList list_edit(win, Text("Edit", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT), DropdownList::UP);
+  DropdownList list_edit(Text("Edit", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT), DropdownList::UP);
   bottom_elements.addElement(&list_edit);
 
-  DropdownList list_functions(win, Text("Functions", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT), DropdownList::UP, false);
+  DropdownList list_functions(Text("Functions", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT), DropdownList::UP, false);
   bottom_elements.addElement(&list_functions);
 
   vector<string> files = findFiles(main_directory + "functions", R"(\.lua$)");
@@ -84,7 +84,7 @@ int main(int argc, char* argv[]) {
   for (auto file : files) {
     smatch match;
     regex_search(file, match, std::regex(R"(.*?([^/\\]+)\.lua$)", std::regex::icase));
-    GuiElementPtr button(new Button(win, Text(regex_replace(match.str(1), regex(R"(_)"), " "), ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(256, STATUS_HEIGHT)));
+    GuiElementPtr button(new Button(Text(regex_replace(match.str(1), regex(R"(_)"), " "), ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(256, STATUS_HEIGHT)));
     button->onMouseLeftReleased().connect([=,&lua]() {
       try {
         lua.script_file(file);
@@ -157,7 +157,7 @@ int main(int argc, char* argv[]) {
       RectangleShape r(Vector2f(win_size.x, 2));
       r.setFillColor(ResourceManager::color("interface"));
       for (auto track : track_handlers) {
-        track.second->update(delta, scale_vec, Vector2i(mouse_pos.x, mouse_pos.y - INTERFACE_HEIGHT - offset), !pressed_gui_element);
+        track.second->update(delta, scale_vec, Vector2i(mouse_pos.x, mouse_pos.y - INTERFACE_HEIGHT - offset), !mouse_over_gui_element);
         Sprite s(track.second->getTexture());
         s.setPosition(0, INTERFACE_HEIGHT + offset);
         win.draw(s);
@@ -185,7 +185,7 @@ int main(int argc, char* argv[]) {
     r.setPosition(0, win_size.y - STATUS_HEIGHT - SEEK_HEIGHT);
     win.draw(r);
     if (win.hasFocus() && mouse_pos.y > win_size.y - STATUS_HEIGHT - SEEK_HEIGHT && mouse_pos.y < win_size.y - STATUS_HEIGHT
-        && Mouse::isButtonPressed(Mouse::Button::Left) && !pressed_gui_element) {
+        && Mouse::isButtonPressed(Mouse::Button::Left) && !mouse_over_gui_element) {
       song.setPosition(seconds(song.length().asSeconds() * ((float) mouse_pos.x / win_size.x)));
     }
 
@@ -270,7 +270,7 @@ int main(int argc, char* argv[]) {
         case Event::MouseButtonReleased:
         case Event::MouseMoved:
           if (win.hasFocus()) {
-            pressed_gui_element = GuiElement::handleMouseEvent(e);
+            mouse_over_gui_element = GuiElement::handleMouseEvent(e);
           }
           break;
         case Event::MouseWheelMoved:

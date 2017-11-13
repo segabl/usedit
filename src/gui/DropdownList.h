@@ -25,7 +25,7 @@ namespace gui {
       Container container;
       Direction direction;
     public:
-      DropdownList(sf::RenderWindow& window, sf::Text text, sf::Vector2f size, Direction direction = DOWN, bool enabled = true);
+      DropdownList(sf::Text text, sf::Vector2f size, Direction direction = DOWN, bool enabled = true);
 
       virtual sf::Vector2f getSize() const;
       virtual void setSize(sf::Vector2f size);

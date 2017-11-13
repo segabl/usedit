@@ -9,8 +9,8 @@
 
 #include <cmath>
 
-gui::Container::Container(sf::RenderWindow& window, unsigned columns, bool enabled) :
-    gui::GuiElement(window, sf::Vector2f(0, 0), enabled), columns(columns) {
+gui::Container::Container(unsigned columns, bool enabled) :
+    gui::GuiElement(sf::Vector2f(0, 0), enabled), columns(columns) {
 }
 
 void gui::Container::calculateSize() {
@@ -32,6 +32,7 @@ void gui::Container::calculateSize() {
 
 void gui::Container::addElement(GuiElement* element) {
   elements.push_back(element);
+  element->setZ(getZ() - 1);
   element->setParent(this);
   calculateSize();
 }
@@ -47,6 +48,13 @@ void gui::Container::removeElement(GuiElement* element) {
   calculateSize();
 }
 
+void gui::Container::setZ(int z) {
+  this->z = z;
+  for (auto element : elements) {
+    element->setZ(z - 1);
+  }
+}
+
 void gui::Container::setSize(sf::Vector2f size) {
 }
 
@@ -57,7 +65,7 @@ void gui::Container::update() {
   if (!isVisible()) {
     return;
   }
-  gui::GuiElement::update();
+  GuiElement::update();
 
   if (!isEnabled()) {
     background.setFillColor(settings.background.color.disabled);

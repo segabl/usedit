@@ -20,7 +20,7 @@
 #include <SFML/Window/Event.hpp>
 #include <functional>
 #include <map>
-#include <set>
+#include <vector>
 
 namespace gui {
 
@@ -42,20 +42,22 @@ namespace gui {
         DISABLED, NORMAL, FOCUS, ACTIVE
       };
     protected:
-      static std::set<GuiElement*> elements;
-      static GuiElement* pressed_element;
+      static std::vector<GuiElement*> all_elements;
+      static GuiElement* active_element;
 
-      sf::RenderWindow* window;
       State state;
       bool visible;
+      int z;
       sf::Vector2f size;
       sf::RectangleShape background;
       GuiElement* parent;
-      GuiElement(sf::RenderWindow& window, sf::Vector2f size, bool enabled = true);
+      GuiElement(sf::Vector2f size, bool enabled = true);
       virtual ~GuiElement();
       virtual bool isParentEnabled() const;
       virtual bool isParentVisible() const;
       Signal signals[10];
+
+      static void sortElements();
     public:
       static Settings default_settings;
       Settings settings;
@@ -73,6 +75,9 @@ namespace gui {
 
       virtual GuiElement* getParent();
       virtual void setParent(GuiElement* parent);
+
+      virtual int getZ();
+      virtual void setZ(int z);
 
       virtual State getState() const;
       virtual void setState(State state);

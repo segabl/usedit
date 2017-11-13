@@ -21,10 +21,12 @@ namespace gui {
       std::vector<GuiElement*> elements;
       void calculateSize();
     public:
-      Container(sf::RenderWindow& window, unsigned columns = 1, bool enabled = true);
+      Container(unsigned columns = 1, bool enabled = true);
 
       virtual void addElement(GuiElement* element);
       virtual void removeElement(GuiElement* element);
+
+      virtual void setZ(int z);
 
       virtual void setSize(sf::Vector2f size);
       virtual void setSize(float x, float y);

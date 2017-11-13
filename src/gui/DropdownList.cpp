@@ -7,13 +7,15 @@
 
 #include "DropdownList.h"
 
-gui::DropdownList::DropdownList(sf::RenderWindow& window, sf::Text text, sf::Vector2f size, gui::DropdownList::Direction direction, bool enabled) :
-    gui::GuiElement(window, size, enabled), button(window, text, size), container(window, 1), direction(direction) {
+gui::DropdownList::DropdownList(sf::Text text, sf::Vector2f size, gui::DropdownList::Direction direction, bool enabled) :
+    gui::GuiElement(size, enabled), button(text, size), container(1), direction(direction) {
   button.onMouseLeftPressed().connect([&]() {
     container.setVisible(true);
   });
   button.setParent(this);
+  button.setZ(getZ() - 1);
   container.setParent(this);
+  container.setZ(getZ() - 2);
   container.setVisible(false);
   container.onActiveLost().connect([&]() {
     container.setVisible(false);
