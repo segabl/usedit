@@ -101,6 +101,7 @@ gui::GuiElement* gui::GuiElement::handleMouseEvent(sf::Event& event) {
         e->setState(State::ACTIVE);
       } else if (e_state == State::ACTIVE) {
         signals.push_back(&e->onActiveLost());
+        e->setState(State::NORMAL);
       }
     } else if (event.type == sf::Event::MouseButtonReleased) {
       if (mouse_inside && ignore) {
@@ -139,8 +140,8 @@ gui::GuiElement* gui::GuiElement::handleMouseEvent(sf::Event& event) {
     active_element = top_element;
   }
 
-  for (auto signal : signals) {
-    signal->send();
+  for (auto it = signals.rbegin(); it!= signals.rend(); it++) {
+    (*it)->send();
   }
 
   return top_element;

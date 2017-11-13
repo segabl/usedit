@@ -42,6 +42,7 @@ void gui::DropdownList::update() {
   }
   if (list.isVisible()) {
     setState(State::ACTIVE);
+    list.setState(State::ACTIVE);
   }
   Button::update();
 
