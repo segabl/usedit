@@ -308,7 +308,7 @@ int main(int argc, char* argv[]) {
               song.bpm = floor(song.bpm * 10) / 10;
               break;
             default:
-              log(0, "Key pressed: " + toString(e.key.code));
+              log(0, "Key pressed:", e.key.code);
               break;
           }
           break;
@@ -323,7 +323,7 @@ int main(int argc, char* argv[]) {
 
 inline void setupLuaState(sol::state& lua) {
   lua.open_libraries();
-  lua["log"] = static_cast<void (*)(int, std::string)>(log);
+  lua.set_function("log", static_cast<void (*)(int, std::string)>(log));
   lua.new_usertype<Song>("Song", "bpm", &Song::bpm, "gap", &Song::gap, "tracks", &Song::note_tracks);
   lua.new_usertype<Note>("Note",
       sol::constructors<Note(Note::Type, int, int, int, std::string)>(),

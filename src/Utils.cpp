@@ -8,23 +8,10 @@
 #include "Utils.h"
 
 #include <ctime>
-#include <iomanip>
 #include <fstream>
-#include <iostream>
 #include <regex>
 #include <windows.h>
 #include <dirent.h>
-
-void log(int level, std::string message) {
-  std::ostream* out = &std::cout;
-  if (level > 1) {
-    out = &std::cerr;
-  }
-  const char* levels[] = { "INFO", "WARN", "ERROR", "FATAL" };
-  std::time_t t = std::time(nullptr);
-  std::tm tm = *std::localtime(&t);
-  (*out) << std::put_time(&tm, "[%H:%M:%S]") << "[" << levels[(level >= 0 && level < 4) ? level : 0] << "] " << message << std::endl;
-}
 
 std::string getOpenFile(std::string title) {
   char filename[MAX_PATH];

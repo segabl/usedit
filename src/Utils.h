@@ -8,6 +8,8 @@
 #ifndef SRC_UTILS_H_
 #define SRC_UTILS_H_
 
+#include <iomanip>
+#include <iostream>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -15,7 +17,29 @@
 #define BEATS_TO_SECONDS(BEATS, BPM) ((BEATS) / ((BPM) / 60.f) / 4.f))
 #define SECONDS_TO_BEATS(SECONDS, BPM) (((BPM) / 60.f) * (SECONDS) * 4.f)
 
-void log(int level, std::string message);
+template<class T>
+void print(std::ostream* out, T type) {
+  (*out) << type << std::endl;
+}
+
+template<class H, class ... T>
+void print(std::ostream* out, H head, T ... tail) {
+  (*out) << head << " ";
+  print(out, tail...);
+}
+
+template<class ...L>
+void log(int level, L ... args) {
+  std::ostream* out = &std::cout;
+  if (level > 1) {
+    out = &std::cerr;
+  }
+  const char* levels[] = { "INFO", "WARN", "ERROR", "FATAL" };
+  std::time_t t = std::time(nullptr);
+  std::tm tm = *std::localtime(&t);
+  (*out) << std::put_time(&tm, "[%H:%M:%S]") << "[" << levels[(level >= 0 && level < 4) ? level : 0] << "] ";
+  print(out, args...);
+}
 
 std::string getOpenFile(std::string title);
 
