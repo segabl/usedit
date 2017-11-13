@@ -14,22 +14,22 @@
 #include <map>
 #include <thread>
 #include <mutex>
-#include <tuple>
 
 typedef std::map<int, audiere::OutputStreamPtr> OutputStreamPtrMap;
 
 class ToneGenerator {
   private:
     static audiere::AudioDevicePtr audio_device;
-    OutputStreamPtrMap tone_map;
+    static std::map<int, OutputStreamPtrMap> tone_map;
+
     audiere::OutputStreamPtr stream;
+    std::mutex stream_mtx;
     int type;
     float volume;
     sf::Time time;
     bool alive;
     sf::Clock clock;
     std::thread play_thread;
-    std::mutex mtx;
     void work();
   public:
     ToneGenerator(int type = 0);
