@@ -10,7 +10,7 @@
 gui::DropdownList::DropdownList(sf::Text text, sf::Vector2f size, gui::DropdownList::Direction direction, bool enabled) :
     gui::Button(text, size, enabled), list(1), direction(direction) {
   onMouseLeftPressed().connect([&]() {
-    list.setVisible(true);
+    list.setVisible(!list.isVisible());
   });
   list.setParent(this);
   list.setZ(getZ() - 1);
@@ -31,13 +31,17 @@ void gui::DropdownList::removeElement(GuiElement* element) {
   list.removeElement(element);
 }
 
+void gui::DropdownList::setZ(int z) {
+  Button::setZ(z);
+  list.setZ(getZ() - 1);
+}
+
 void gui::DropdownList::update() {
   if (!isVisible()) {
     return;
   }
   if (list.isVisible()) {
     setState(State::ACTIVE);
-    list.setState(State::ACTIVE);
   }
   Button::update();
 

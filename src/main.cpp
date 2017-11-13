@@ -38,6 +38,8 @@ typedef shared_ptr<GuiElement> GuiElementPtr;
 void setupLuaState(sol::state& lua);
 
 int main(int argc, char* argv[]) {
+  log(0, "Starting...");
+
   string main_directory = regex_replace(regex_replace(argv[0], regex(R"([^/\\]+$)"), ""), regex(R"(\\)"), "/");
   ResourceManager::initializeResources(main_directory);
 
@@ -270,7 +272,11 @@ int main(int argc, char* argv[]) {
         case Event::MouseButtonReleased:
         case Event::MouseMoved:
           if (win.hasFocus()) {
-            mouse_over_gui_element = GuiElement::handleMouseEvent(e);
+            GuiElement* element = GuiElement::handleMouseEvent(e);
+            if (element != mouse_over_gui_element) {
+              //log(0, element);
+            }
+            mouse_over_gui_element = element;
           }
           break;
         case Event::MouseWheelMoved:
@@ -317,6 +323,8 @@ int main(int argc, char* argv[]) {
       }
     }
   }
+
+  log(0, "Exiting...");
 
   return 0;
 }

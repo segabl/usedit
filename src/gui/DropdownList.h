@@ -29,6 +29,8 @@ namespace gui {
       virtual void addElement(GuiElement* element);
       virtual void removeElement(GuiElement* element);
 
+      virtual void setZ(int z);
+
       virtual void update();
       virtual void draw(sf::RenderTarget& rt, sf::RenderStates rs) const;
   };

@@ -36,11 +36,11 @@ namespace gui {
       Params text, background;
   };
 
+  enum class State {
+    DISABLED, NORMAL, FOCUS, ACTIVE
+  };
+
   class GuiElement: public sf::Transformable, public sf::Drawable {
-    public:
-      enum State {
-        DISABLED, NORMAL, FOCUS, ACTIVE
-      };
     protected:
       static std::vector<GuiElement*> all_elements;
       static GuiElement* active_element;

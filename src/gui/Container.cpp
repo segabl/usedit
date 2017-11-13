@@ -49,9 +49,9 @@ void gui::Container::removeElement(GuiElement* element) {
 }
 
 void gui::Container::setZ(int z) {
-  this->z = z;
+  GuiElement::setZ(z);
   for (auto element : elements) {
-    element->setZ(z - 1);
+    element->setZ(getZ() - 1);
   }
 }
 
