@@ -49,8 +49,7 @@ Song::~Song() {
 bool Song::loadFromFile(string fname) {
   clear();
 
-  ifstream file;
-  file.open(fname, ios_base::in);
+  ifstream file(fname, ios_base::in);
   if (!file.is_open()) {
     log(2, "Could not open \"" + fname + "\"!");
     return false;
@@ -58,6 +57,17 @@ bool Song::loadFromFile(string fname) {
   log(0, "Opened \"" + fname + "\"");
 
   int player = 0;
+  Note prev_note;
+  bool first = true;
+
+  auto checkNoteOverlap = [](Note& n, Note& prev_note, bool& first) {
+    if (!first && n.position < prev_note.position + prev_note.length) {
+      log(1, n.type == Note::Type::LINEBREAK ? "Line break" : "Note", "at", n.position, "starts before",
+          prev_note.type == Note::Type::LINEBREAK ? "line break of previous line!" : "previous note!");
+    }
+    first = false;
+    prev_note = n;
+  };
 
   string line;
   smatch match;
@@ -66,47 +76,45 @@ bool Song::loadFromFile(string fname) {
 
     if (regex_search(line, match, regex(R"(^#(.+?):(.+))", regex::icase))) {
       // Tags
-    if (regex_match(match.str(1), regex(R"(^BPM$)", regex::icase)))
-{      bpm = toType<float>(regex_replace(match.str(2), regex(R"(,)"), "."));
-    } else if (regex_match(match.str(1), regex(R"(^GAP$)", regex::icase))) {
-      gap = toType<float>(regex_replace(match.str(2), regex(R"(,)"), "."));
-    } else if (regex_match(match.str(1), regex(R"(^START$)", regex::icase))) {
-      start = toType<float>(regex_replace(match.str(2), regex(R"(,)"), "."));
-    } else {
-      tags[match.str(1)] = match.str(2);
-    }
-  } else if (regex_search(line, match, regex(R"(^([:F\*]) (-?[0-9]+) ([0-9]+) (-?[0-9]+) (.*))", regex::icase))) {
+      if (regex_match(match.str(1), regex(R"(^BPM$)", regex::icase))) {
+        bpm = toType<float>(regex_replace(match.str(2), regex(R"(,)"), "."));
+      } else if (regex_match(match.str(1), regex(R"(^GAP$)", regex::icase))) {
+        gap = toType<float>(regex_replace(match.str(2), regex(R"(,)"), "."));
+      } else if (regex_match(match.str(1), regex(R"(^START$)", regex::icase))) {
+        start = toType<float>(regex_replace(match.str(2), regex(R"(,)"), "."));
+      } else {
+        tags[match.str(1)] = match.str(2);
+      }
+    } else if (regex_search(line, match, regex(R"(^([:F\*]) (-?[0-9]+) ([0-9]+) (-?[0-9]+) (.*))", regex::icase))) {
       // Notes
       Note::Type t = match.str(1) == "F" ? Note::FREESTYLE : (match.str(1) == "*" ? Note::GOLD : Note::DEFAULT);
+      Note n(t, toType<int>(match.str(2)), toType<int>(match.str(3)), toType<int>(match.str(4)), match.str(5));
+      note_tracks[player].push_back(n);
+      checkNoteOverlap(n, prev_note, first);
       has_golden_notes = has_golden_notes || t == Note::GOLD;
-      note_tracks[player].push_back(Note(t, toType<int>(match.str(2)), toType<int>(match.str(3)), toType<int>(match.str(4)), match.str(5)));
     } else if (regex_search(line, match, regex(R"(^- ([0-9]+)(?: ([0-9]+))?)", regex::icase))) {
-    // Line break
-    note_tracks[player].push_back(Note(Note::LINEBREAK, toType<int>(match.str(1))));
-  } else if (regex_search(line, match, regex(R"(^P([0-9]))", regex::icase))) {
-        // Player switch
-        player = toType<int>(match.str(1));
-      } else if (regex_search(line, match, regex(R"(^E)", regex::icase))) {
-    // End of file
-    file.close();
-    break;
-  } else {
-    // Unrecognized line
-    log(1, "Unrecognized line \"" + line + "\"!");
-  }
+      // Line break
+      Note n(Note::LINEBREAK, toType<int>(match.str(1)));
+      checkNoteOverlap(n, prev_note, first);
+      note_tracks[player].push_back(n);
+    } else if (regex_search(line, match, regex(R"(^P([0-9]))", regex::icase))) {
+      // Player switch
+      first = true;
+      player = toType<int>(match.str(1));
+    } else if (regex_search(line, match, regex(R"(^E)", regex::icase))) {
+      // End of file
+      break;
+    } else {
+      // Unrecognized line
+      log(1, "Unrecognized line \"" + line + "\"!");
+    }
     if (file.eof()) {
-      file.close();
-      log(2, "End of file reached without final \"E\" marker!");
-      clear();
-      return false;
+      log(1, "End of file reached without final \"E\" marker!");
+      break;
     }
   }
 
   log(0, "Song file parsed successfully");
-
-  for (auto track : note_tracks) {
-    track.second.sort();
-  }
 
   string path = regex_replace(fname, regex(R"([^/\\]+$)"), "");
 
@@ -143,8 +151,7 @@ bool Song::loadFromFile(string fname) {
 }
 
 bool Song::saveToFile(string fname) const {
-  ofstream file;
-  file.open(fname, ios_base::out);
+  ofstream file(fname, ios_base::out);
   if (!file.is_open()) {
     log(2, "Could not open \"" + fname + "\"!");
     return false;
@@ -181,7 +188,6 @@ bool Song::saveToFile(string fname) const {
     }
   }
   file << "E";
-  file.close();
   log(0, "Saved song to \"" + fname + "\"");
   return true;
 }
