@@ -8,78 +8,49 @@
 #include "DropdownList.h"
 
 gui::DropdownList::DropdownList(sf::Text text, sf::Vector2f size, gui::DropdownList::Direction direction, bool enabled) :
-    gui::GuiElement(size, enabled), button(text, size), container(1), direction(direction) {
-  button.onMouseLeftPressed().connect([&]() {
-    container.setVisible(true);
+    gui::Button(text, size, enabled), list(1), direction(direction) {
+  onMouseLeftPressed().connect([&]() {
+    list.setVisible(true);
   });
-  button.setParent(this);
-  button.setZ(getZ() - 1);
-  container.setParent(this);
-  container.setZ(getZ() - 2);
-  container.setVisible(false);
-  container.onActiveLost().connect([&]() {
-    container.setVisible(false);
+  list.setParent(this);
+  list.setZ(getZ() - 1);
+  list.setVisible(false);
+  list.onActiveLost().connect([&]() {
+    list.setVisible(false);
   });
-  container.onMouseLeftReleased().connect([&]() {
-    container.setVisible(false);
+  list.onMouseLeftReleased().connect([&]() {
+    list.setVisible(false);
   });
-}
-
-bool gui::DropdownList::isInside(sf::Vector2f point) const {
-  return button.isInside(point);
-}
-
-sf::Vector2f gui::DropdownList::getSize() const {
-  return button.getSize();
-}
-
-void gui::DropdownList::setSize(sf::Vector2f size) {
-  button.setSize(size);
-}
-
-void gui::DropdownList::setSize(float x, float y) {
-  button.setSize(x, y);
-}
-
-void gui::DropdownList::setText(sf::Text text) {
-  button.setText(text);
-}
-
-sf::Text gui::DropdownList::getText() const {
-  return button.getText();
 }
 
 void gui::DropdownList::addElement(GuiElement* element) {
-  container.addElement(element);
+  list.addElement(element);
 }
 
 void gui::DropdownList::removeElement(GuiElement* element) {
-  container.removeElement(element);
+  list.removeElement(element);
 }
 
 void gui::DropdownList::update() {
   if (!isVisible()) {
     return;
   }
-  if (container.isVisible()) {
-    button.setState(State::ACTIVE);
-    container.setState(State::ACTIVE);
+  if (list.isVisible()) {
+    setState(State::ACTIVE);
+    list.setState(State::ACTIVE);
   }
-  button.setPosition(getPosition());
-  button.setOrigin(getOrigin());
-  button.setScale(getScale());
-  button.update();
+  Button::update();
 
-  container.setPosition(getPosition() - getOrigin() + sf::Vector2f(0, direction == UP ? -container.getSize().y : size.y));
-  container.setOrigin(0, 0);
-  container.setScale(getScale());
-  container.update();
+  list.setPosition(getPosition() - getOrigin() + sf::Vector2f(0, direction == UP ? -list.getSize().y : size.y));
+  list.setOrigin(0, 0);
+  list.setScale(getScale());
+  list.update();
 }
 
 void gui::DropdownList::draw(sf::RenderTarget& rt, sf::RenderStates rs) const {
   if (!isVisible()) {
     return;
   }
-  rt.draw(container, rs);
-  rt.draw(button, rs);
+  Button::draw(rt, rs);
+  rt.draw(list, rs);
 }
