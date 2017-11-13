@@ -36,6 +36,7 @@ typedef shared_ptr<TrackHandler> TrackHandlerPtr;
 typedef shared_ptr<GuiElement> GuiElementPtr;
 
 void setupLuaState(sol::state& lua);
+bool executeLuaFile(sol::state& lua, string fname);
 
 int main(int argc, char* argv[]) {
   log(0, "Starting...");
@@ -85,14 +86,10 @@ int main(int argc, char* argv[]) {
   vector<GuiElementPtr> function_elements;
   for (auto file : files) {
     smatch match;
-    regex_search(file, match, std::regex(R"(.*?([^/\\]+)\.lua$)", std::regex::icase));
+    regex_search(file, match, std::regex(R"(.*?([^/\\]+)\.luac?$)", std::regex::icase));
     GuiElementPtr button(new Button(Text(regex_replace(match.str(1), regex(R"(_)"), " "), ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(256, STATUS_HEIGHT)));
     button->onMouseLeftReleased().connect([=,&lua]() {
-      try {
-        lua.script_file(file);
-      } catch (sol::error &e) {
-        log(2, e.what());
-      }
+      executeLuaFile(lua, file);
     });
     function_elements.push_back(button);
     list_functions.addElement(button.get());
@@ -340,6 +337,16 @@ inline void setupLuaState(sol::state& lua) {
       "length", &Note::length,
       "pitch", &Note::pitch,
       "lyrics", &Note::lyrics
-  );
+      );
   lua.new_enum("NoteType", "LINEBREAK", Note::LINEBREAK, "DEFAULT", Note::DEFAULT, "FREESTYLE", Note::FREESTYLE, "GOLD", Note::GOLD);
+}
+
+inline bool executeLuaFile(sol::state& lua, string fname) {
+  try {
+    lua.script_file(fname);
+  } catch (sol::error &e) {
+    log(2, e.what());
+    return false;
+  }
+  return true;
 }
