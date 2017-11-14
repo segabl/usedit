@@ -128,8 +128,8 @@ bool Song::loadFromFile(string fname) {
     int channel_count;
     SampleFormat sample_format;
     source->getFormat(channel_count, sample_rate, sample_format);
-    if (audio_device) {
-      stream = OpenSound(audio_device, source, true);
+    if (audio_device && (stream = OpenSound(audio_device, source, true))) {
+      song_len = seconds(stream->getLength() / float(sample_rate));
       setPosition(seconds(start));
     }
     log(0, "Audio file opened for streaming");
@@ -204,6 +204,8 @@ void Song::clear() {
   sample_rate = 44100;
   stream = nullptr;
   paused = false;
+  song_pos = Time();
+  song_len = Time();
   cover = ResourceManager::texture("no_cover");
   bpm = 0;
   gap = 0;
@@ -231,14 +233,12 @@ void Song::stop() {
     paused = false;
     stream->stop();
     stream->setPosition(start * sample_rate);
+    song_pos = seconds(start);
   }
 }
 
 bool Song::isPlaying() const {
-  if (stream) {
-    return stream->isPlaying();
-  }
-  return false;
+  return stream && stream->isPlaying();
 }
 
 bool Song::isPaused() const {
@@ -272,19 +272,17 @@ bool Song::hasMedley() const {
 void Song::setPosition(Time time) {
   if (stream) {
     stream->setPosition(time.asSeconds() * sample_rate);
+    song_pos = time;
   }
 }
 
-Time Song::getPosition() const {
-  if (stream) {
-    return seconds(stream->getPosition() / float(sample_rate));
+Time Song::getPosition() {
+  if (isPlaying()) {
+    song_pos = seconds(stream->getPosition() / float(sample_rate));
   }
-  return Time();
+  return song_pos;
 }
 
 Time Song::length() const {
-  if (stream) {
-    return seconds(stream->getLength() / float(sample_rate));
-  }
-  return Time();
+  return song_len;
 }

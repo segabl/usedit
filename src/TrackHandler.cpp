@@ -60,8 +60,8 @@ void drawNote(RenderTarget& rt, NoteList::iterator note, Vector2f scale, Color b
 }
 
 TrackHandler::TrackHandler(Song* song, int track_number, Vector2f size) :
-    song(song), track_number(track_number), tone_generator(abs(track_number % 2)), view(FloatRect(0, 0, size.x, size.y)), notes(song->note_tracks[track_number]), current_note(
-        notes.begin()), current_line_start(current_note), scroll_pos(current_note->position - 4, current_note->pitch), scroll_to(scroll_pos) {
+    song(song), track_number(track_number), tone_generator(abs(track_number % 2)), view(FloatRect(0, 0, size.x, size.y)), notes(song->note_tracks[track_number]),
+    current_note(notes.begin()), current_line_start(current_note), scroll_pos(current_note->position - 4, current_note->pitch), scroll_to(scroll_pos) {
   texture.create(size.x, size.y);
   if (song->note_tracks.size() > 1) {
     track_name = song->tags["P" + toString(track_number)];
@@ -85,8 +85,7 @@ void TrackHandler::update(float delta, Vector2f scale, Vector2i mouse_pos, bool 
   RectangleShape rectangle;
   Text text;
 
-  float song_seconds = song->getPosition().asSeconds();
-  float song_pos = SECONDS_TO_BEATS(song_seconds - song->gap / 1000.f, song->bpm);
+  float song_pos = SECONDS_TO_BEATS(song->getPosition().asSeconds() - song->gap / 1000.f, song->bpm);
 
   if (song_pos >= current_note->position && song_pos < current_note->position + current_note->length && current_note->type != Note::Type::FREESTYLE
       && current_note->type != Note::Type::LINEBREAK && song->isPlaying() && !tone_generator.isPlaying()) {
@@ -151,7 +150,7 @@ void TrackHandler::update(float delta, Vector2f scale, Vector2i mouse_pos, bool 
   rectangle.setFillColor(Color(255, 255, 255, 5));
   text.setFont(ResourceManager::font("default"));
   text.setCharacterSize(scale.y);
-  text.setFillColor(Color(255, 255, 255, 50));
+  text.setFillColor(Color(255, 255, 255, 25));
   for (int i = floor((-scroll_pos.y - track_size.y / scale.y) * 0.5); i < ceil((-scroll_to.y + track_size.y / scale.y) * 0.5f); i++) {
     if (i % 2 == 0) {
       rectangle.setPosition(view_top_left.x, i * scale.y);

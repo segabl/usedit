@@ -28,6 +28,8 @@ class Song {
     static audiere::AudioDevicePtr audio_device;
     int sample_rate;
     audiere::OutputStreamPtr stream;
+    sf::Time song_pos;
+    sf::Time song_len;
     bool paused;
     bool loaded;
     bool has_golden_notes;
@@ -65,7 +67,7 @@ class Song {
     bool hasMedley() const;
 
     void setPosition(sf::Time time);
-    sf::Time getPosition() const;
+    sf::Time getPosition();
     sf::Time length() const;
 };
 
