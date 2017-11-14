@@ -87,14 +87,14 @@ bool Song::loadFromFile(string fname) {
       }
     } else if (regex_search(line, match, regex(R"(^([:F\*]) (-?[0-9]+) ([0-9]+) (-?[0-9]+) (.*))", regex::icase))) {
       // Notes
-      Note::Type t = match.str(1) == "F" ? Note::FREESTYLE : (match.str(1) == "*" ? Note::GOLD : Note::DEFAULT);
+      Note::Type t = match.str(1) == "F" ? Note::Type::FREESTYLE : (match.str(1) == "*" ? Note::Type::GOLD : Note::Type::DEFAULT);
       Note n(t, toType<int>(match.str(2)), toType<int>(match.str(3)), toType<int>(match.str(4)), match.str(5));
       note_tracks[player].push_back(n);
       checkNoteOverlap(n, prev_note, first);
-      has_golden_notes = has_golden_notes || t == Note::GOLD;
+      has_golden_notes = has_golden_notes || t == Note::Type::GOLD;
     } else if (regex_search(line, match, regex(R"(^- ([0-9]+)(?: ([0-9]+))?)", regex::icase))) {
       // Line break
-      Note n(Note::LINEBREAK, toType<int>(match.str(1)));
+      Note n(Note::Type::LINEBREAK, toType<int>(match.str(1)));
       checkNoteOverlap(n, prev_note, first);
       note_tracks[player].push_back(n);
     } else if (regex_search(line, match, regex(R"(^P([0-9]))", regex::icase))) {
@@ -172,14 +172,14 @@ bool Song::saveToFile(string fname) const {
     }
     Note note;
     for (auto note = track.second.begin(); note != track.second.end(); note++) {
-      if (note->type == Note::LINEBREAK) {
+      if (note->type == Note::Type::LINEBREAK) {
         file << "- " << note->position;
         if (note->length != 0) {
           file << " " << note->length;
         }
         file << endl;
       } else {
-        file << (note->type == Note::DEFAULT ? ":" : (note->type == Note::FREESTYLE ? "F" : "*")) << " ";
+        file << (note->type == Note::Type::DEFAULT ? ":" : (note->type == Note::Type::FREESTYLE ? "F" : "*")) << " ";
         file << note->position << " ";
         file << note->length << " ";
         file << note->pitch << " ";

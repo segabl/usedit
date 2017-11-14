@@ -147,11 +147,11 @@ int main(int argc, char* argv[]) {
 
     Vector2i mouse_pos = Mouse::getPosition(win);
     Vector2i win_size = Vector2i(win.getSize());
-    Vector2f scale_vec((64 / (song.bpm / 60.f)) * scale, 64 * scale * 0.25);
 
     win.clear(ResourceManager::color("background"));
 
     if (song.isLoaded()) {
+      Vector2f scale_vec((64 / (song.bpm / 60.f)) * scale, 64 * scale * 0.25);
       float offset = 0;
       RectangleShape r(Vector2f(win_size.x, 2));
       r.setFillColor(ResourceManager::color("interface"));
@@ -338,7 +338,7 @@ inline void setupLuaState(sol::state& lua) {
       "pitch", &Note::pitch,
       "lyrics", &Note::lyrics
       );
-  lua.new_enum("NoteType", "LINEBREAK", Note::LINEBREAK, "DEFAULT", Note::DEFAULT, "FREESTYLE", Note::FREESTYLE, "GOLD", Note::GOLD);
+  lua.new_enum("NoteType", "LINEBREAK", Note::Type::LINEBREAK, "DEFAULT", Note::Type::DEFAULT, "FREESTYLE", Note::Type::FREESTYLE, "GOLD", Note::Type::GOLD);
 }
 
 inline bool executeLuaFile(sol::state& lua, string fname) {
