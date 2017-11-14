@@ -45,19 +45,21 @@ namespace gui {
       static std::vector<GuiElement*> all_elements;
       static GuiElement* active_element;
 
+      static void sortElements();
+
       State state;
       bool visible;
       int z;
       sf::Vector2f size;
       sf::RectangleShape background;
       GuiElement* parent;
+      Signal signals[10];
+
       GuiElement(sf::Vector2f size, bool enabled = true);
       virtual ~GuiElement();
       virtual bool isParentEnabled() const;
       virtual bool isParentVisible() const;
-      Signal signals[10];
 
-      static void sortElements();
     public:
       static Settings default_settings;
       Settings settings;
@@ -68,10 +70,15 @@ namespace gui {
       virtual Signal& onMouseRightPressed();
       virtual Signal& onMouseLeftReleased();
       virtual Signal& onMouseRightReleased();
+
       virtual Signal& onFocusGained();
       virtual Signal& onFocusLost();
+
       virtual Signal& onActiveGained();
       virtual Signal& onActiveLost();
+
+      virtual Signal& onResized();
+      virtual Signal& onDestroyed();
 
       virtual GuiElement* getParent();
       virtual void setParent(GuiElement* parent);

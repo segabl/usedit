@@ -23,12 +23,16 @@ gui::DropdownList::DropdownList(sf::Text text, sf::Vector2f size, gui::DropdownL
   });
 }
 
-void gui::DropdownList::addElement(GuiElement* element) {
-  list.addElement(element);
+void gui::DropdownList::add(GuiElement* element) {
+  list.add(element);
 }
 
-void gui::DropdownList::removeElement(GuiElement* element) {
-  list.removeElement(element);
+void gui::DropdownList::remove(GuiElement* element) {
+  list.remove(element);
+}
+
+void gui::DropdownList::clear() {
+  list.clear();
 }
 
 void gui::DropdownList::setZ(int z) {

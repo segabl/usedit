@@ -31,31 +31,6 @@ gui::Settings gui::GuiElement::default_settings = {
     }
 };
 
-gui::GuiElement::GuiElement(sf::Vector2f size, bool enabled) :
-    state(enabled ? State::NORMAL : State::DISABLED), visible(true), z(0), size(size), parent(nullptr), settings(default_settings) {
-  all_elements.push_back(this);
-}
-
-gui::GuiElement::~GuiElement() {
-  if (active_element == this) {
-    active_element = nullptr;
-  }
-  for (auto it = all_elements.begin(); it != all_elements.end(); it++) {
-    if (*it == this) {
-      all_elements.erase(it);
-      return;
-    }
-  }
-}
-
-bool gui::GuiElement::isParentEnabled() const {
-  return !parent || parent->isEnabled();
-}
-
-bool gui::GuiElement::isParentVisible() const {
-  return !parent || parent->isVisible();
-}
-
 void gui::GuiElement::sortElements() {
   auto comp = [](GuiElement* lhs, GuiElement* rhs) -> bool {
     return lhs->getZ() < rhs->getZ();
@@ -147,6 +122,32 @@ gui::GuiElement* gui::GuiElement::handleMouseEvent(sf::Event& event) {
   return top_element;
 }
 
+gui::GuiElement::GuiElement(sf::Vector2f size, bool enabled) :
+    state(enabled ? State::NORMAL : State::DISABLED), visible(true), z(0), size(size), parent(nullptr), settings(default_settings) {
+  all_elements.push_back(this);
+}
+
+gui::GuiElement::~GuiElement() {
+  if (active_element == this) {
+    active_element = nullptr;
+  }
+  for (auto it = all_elements.begin(); it != all_elements.end(); it++) {
+    if (*it == this) {
+      all_elements.erase(it);
+      return;
+    }
+  }
+  onDestroyed().send();
+}
+
+bool gui::GuiElement::isParentEnabled() const {
+  return !parent || parent->isEnabled();
+}
+
+bool gui::GuiElement::isParentVisible() const {
+  return !parent || parent->isVisible();
+}
+
 Signal& gui::GuiElement::onMouseLeftPressed() {
   return signals[0];
 }
@@ -177,6 +178,14 @@ Signal& gui::GuiElement::onActiveGained() {
 
 Signal& gui::GuiElement::onActiveLost() {
   return signals[7];
+}
+
+Signal& gui::GuiElement::onResized() {
+  return signals[8];
+}
+
+Signal& gui::GuiElement::onDestroyed() {
+  return signals[9];
 }
 
 gui::GuiElement* gui::GuiElement::getParent() {
@@ -229,11 +238,14 @@ sf::Vector2f gui::GuiElement::getSize() const {
 }
 
 void gui::GuiElement::setSize(sf::Vector2f size) {
-  this->size = size;
+  if (this->size != size) {
+    this->size = size;
+    onResized().send();
+  }
 }
 
 void gui::GuiElement::setSize(float x, float y) {
-  this->size = sf::Vector2f(x, y);
+  this->setSize(sf::Vector2f(x, y));
 }
 
 void gui::GuiElement::update() {

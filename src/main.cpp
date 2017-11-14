@@ -64,23 +64,23 @@ int main(int argc, char* argv[]) {
   Separator separator(Vector2f(160, STATUS_HEIGHT * 0.25));
 
   DropdownList list_file(Text("File", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT), DropdownList::UP);
-  bottom_elements.addElement(&list_file);
+  bottom_elements.add(&list_file);
 
   Button button_load(Text("Open", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT));
-  list_file.addElement(&button_load);
+  list_file.add(&button_load);
   Button button_reload(Text("Reload", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT), false);
-  list_file.addElement(&button_reload);
+  list_file.add(&button_reload);
   Button button_save(Text("Save", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT), false);
-  list_file.addElement(&button_save);
-  list_file.addElement(&separator);
+  list_file.add(&button_save);
+  list_file.add(&separator);
   Button button_quit(Text("Quit", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT));
-  list_file.addElement(&button_quit);
+  list_file.add(&button_quit);
 
   DropdownList list_edit(Text("Edit", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT), DropdownList::UP);
-  bottom_elements.addElement(&list_edit);
+  bottom_elements.add(&list_edit);
 
   DropdownList list_functions(Text("Functions", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT), DropdownList::UP, false);
-  bottom_elements.addElement(&list_functions);
+  bottom_elements.add(&list_functions);
 
   vector<string> files = findFiles(main_directory + "functions", R"(\.lua$)");
   vector<GuiElementPtr> function_elements;
@@ -92,7 +92,7 @@ int main(int argc, char* argv[]) {
       executeLuaFile(lua, file);
     });
     function_elements.push_back(button);
-    list_functions.addElement(button.get());
+    list_functions.add(button.get());
   }
 
   function<void(string)> loadSong = [&](string fname) {

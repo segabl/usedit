@@ -26,8 +26,9 @@ namespace gui {
     public:
       DropdownList(sf::Text text, sf::Vector2f size, Direction direction = DOWN, bool enabled = true);
 
-      virtual void addElement(GuiElement* element);
-      virtual void removeElement(GuiElement* element);
+      virtual void add(GuiElement* element);
+      virtual void remove(GuiElement* element);
+      virtual void clear();
 
       virtual void setZ(int z);
 

@@ -8,9 +8,12 @@
 #ifndef SRC_GUI_CONTAINER_H_
 #define SRC_GUI_CONTAINER_H_
 
+#include <map>
+#include <vector>
+#include <tuple>
+
 #include <SFML/Graphics/RectangleShape.hpp>
 
-#include <vector>
 #include "GuiElement.h"
 
 namespace gui {
@@ -19,12 +22,15 @@ namespace gui {
     protected:
       unsigned columns;
       std::vector<GuiElement*> elements;
+      std::map<GuiElement*, std::vector<std::tuple<Signal*, int>>> element_signals;
       void calculateSize();
     public:
       Container(unsigned columns = 1, bool enabled = true);
+      virtual ~Container();
 
-      virtual void addElement(GuiElement* element);
-      virtual void removeElement(GuiElement* element);
+      virtual void add(GuiElement* element);
+      virtual void remove(GuiElement* element);
+      virtual void clear();
 
       virtual void setZ(int z);
 
