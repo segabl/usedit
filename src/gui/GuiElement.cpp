@@ -128,6 +128,7 @@ gui::GuiElement::GuiElement(sf::Vector2f size, bool enabled) :
 }
 
 gui::GuiElement::~GuiElement() {
+  onDestroyed().send();
   if (active_element == this) {
     active_element = nullptr;
   }
@@ -137,7 +138,6 @@ gui::GuiElement::~GuiElement() {
       return;
     }
   }
-  onDestroyed().send();
 }
 
 bool gui::GuiElement::isParentEnabled() const {

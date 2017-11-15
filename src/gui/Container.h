@@ -18,11 +18,15 @@
 
 namespace gui {
 
+  struct ElementEntry {
+      GuiElement* element;
+      std::vector<std::tuple<Signal*, int>> signal_tuples;
+  };
+
   class Container: public GuiElement {
     protected:
       unsigned columns;
-      std::vector<GuiElement*> elements;
-      std::map<GuiElement*, std::vector<std::tuple<Signal*, int>>> element_signals;
+      std::vector<ElementEntry> elements;
       void calculateSize();
     public:
       Container(unsigned columns = 1, bool enabled = true);
@@ -30,7 +34,7 @@ namespace gui {
 
       virtual void add(GuiElement* element);
       virtual void remove(GuiElement* element);
-      virtual void clear();
+      virtual void clear(bool calc_size = true);
 
       virtual void setZ(int z);
 
