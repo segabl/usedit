@@ -16,6 +16,7 @@ class Signal {
     int slot_id;
     std::map<int, std::function<void()>> slots;
   public:
+    Signal();
     int connect(std::function<void()> function);
     void disconnect(int id);
     void send();

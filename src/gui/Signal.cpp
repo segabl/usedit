@@ -7,6 +7,10 @@
 
 #include "Signal.h"
 
+Signal::Signal() :
+    slot_id(0) {
+}
+
 int Signal::connect(std::function<void()> function) {
   slots[slot_id] = function;
   return slot_id++;
