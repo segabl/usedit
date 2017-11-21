@@ -57,6 +57,13 @@ void drawNote(RenderTarget& rt, NoteList::iterator note, Vector2f scale, Color b
   note_array[7].position = pos + Vector2f(len, scale.y);
 
   rt.draw(note_array, &tex);
+
+  Text t(note->lyrics, ResourceManager::font("lyrics"), scale.y * 0.75);
+  auto bounds = t.getLocalBounds();
+  t.setOrigin(bounds.width / 2 + bounds.left, 0);
+  t.setPosition(pos.x + len * 0.5, pos.y + scale.y);
+  t.setFillColor(c);
+  rt.draw(t);
 }
 
 TrackHandler::TrackHandler(Song* song, int track_number, Vector2f size) :
