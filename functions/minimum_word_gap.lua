@@ -1,6 +1,3 @@
-local min = math.min
-local max = math.max
-
 local amount = 1 --the user should be prompted for this in the future
 
 local next_note, old_len
