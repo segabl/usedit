@@ -82,7 +82,7 @@ int main(int argc, char* argv[]) {
   DropdownList list_functions(Text("Functions", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT), DropdownList::UP, false);
   bottom_elements.add(&list_functions);
 
-  vector<string> files = findFiles(main_directory + "functions", R"(\.lua$)");
+  vector<string> files = findFiles(main_directory + "functions", R"(\.luac?$)");
   vector<GuiElementPtr> function_elements;
   for (auto file : files) {
     smatch match;
