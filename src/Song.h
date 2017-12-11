@@ -42,6 +42,7 @@ class Song {
     float bpm;
     float gap;
     float start;
+    int medley_start, medley_end;
     sf::Texture cover;
     StringMap tags;
     NoteListMap note_tracks;

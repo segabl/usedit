@@ -10,6 +10,7 @@
 #include "Utils.h"
 #include "ResourceManager.h"
 
+#include <algorithm>
 #include <cmath>
 #include <fstream>
 #include <regex>
@@ -82,8 +83,14 @@ bool Song::loadFromFile(string fname) {
         gap = toType<float>(regex_replace(match.str(2), regex(R"(,)"), "."));
       } else if (regex_match(match.str(1), regex(R"(^START$)", regex::icase))) {
         start = toType<float>(regex_replace(match.str(2), regex(R"(,)"), "."));
+      } else if (regex_match(match.str(1), regex(R"(^MEDLEYSTARTBEAT$)", regex::icase))) {
+        medley_start = toType<int>(regex_replace(match.str(2), regex(R"(,)"), "."));
+      } else if (regex_match(match.str(1), regex(R"(^MEDLEYENDBEAT$)", regex::icase))) {
+        medley_end = toType<int>(regex_replace(match.str(2), regex(R"(,)"), "."));
       } else {
-        tags[match.str(1)] = match.str(2);
+        auto tag_name = match.str(1);
+        std::transform(tag_name.begin(), tag_name.end(), tag_name.begin(), [](unsigned char c){ return std::toupper(c); });
+        tags[tag_name] = match.str(2);
       }
     } else if (regex_search(line, match, regex(R"(^([:F\*]) (-?[0-9]+) ([0-9]+) (-?[0-9]+) (.*))", regex::icase))) {
       // Notes
@@ -120,7 +127,7 @@ bool Song::loadFromFile(string fname) {
 
   has_background = fileExists(path + tags["BACKGROUND"]);
   has_video = fileExists(path + tags["VIDEO"]);
-  has_medley = !tags["MEDLEYSTARTBEAT"].empty();
+  has_medley = medley_start < medley_end;
 
   string soundfile = path + tags["MP3"];
   SampleSourcePtr source = OpenSampleSource(soundfile.c_str());
@@ -161,11 +168,15 @@ bool Song::saveToFile(string fname) const {
       file << "#" << tag.first << ":" << tag.second << endl;
     }
   }
-  file << "#BPM:" << regex_replace(toString(bpm), regex(R"(\.)", regex::icase), ",") << endl;
-  file << "#GAP:" << regex_replace(toString(gap), regex(R"(\.)", regex::icase), ",") << endl;
+  if (has_medley) {
+    file << "#MEDLEYSTARTBEAT:" << toString(medley_start) << endl;
+    file << "#MEDLEYENDBEAT:" << toString(medley_end) << endl;
+  }
   if (start != 0) {
     file << "#START:" << regex_replace(toString(start), regex(R"(\.)", regex::icase), ",") << endl;
   }
+  file << "#BPM:" << regex_replace(toString(bpm), regex(R"(\.)", regex::icase), ",") << endl;
+  file << "#GAP:" << regex_replace(toString(gap), regex(R"(\.)", regex::icase), ",") << endl;
   for (auto track : note_tracks) {
     if (track.first != 0) {
       file << "P" << track.first << endl;
@@ -210,6 +221,8 @@ void Song::clear() {
   bpm = 0;
   gap = 0;
   start = 0;
+  medley_start = 0;
+  medley_end = 0;
   tags.clear();
   note_tracks.clear();
 }
