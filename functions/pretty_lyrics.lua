@@ -3,7 +3,7 @@ local next_note
 for _, track in pairs(song.tracks) do
   for i, note in ipairs(track) do
     note.lyrics = note.lyrics:gsub("[´`]", "'")
-    note.lyrics = note.lyrics:gsub("(%S)%s~", "%1~")
+    note.lyrics = note.lyrics:gsub("%s~", "~")
     note.lyrics = note.lyrics:gsub("~%s(%S)", "~%1")
     note.lyrics = note.lyrics:gsub("[.,; ]+\"", "\"")
     if note.type == NoteType.LINEBREAK then
