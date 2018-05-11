@@ -140,10 +140,10 @@ int main(int argc, char* argv[]) {
     loadSong(argv[1]);
   }
 
-  Clock c;
+  Clock delta_clock;
   float delta;
   while (win.isOpen()) {
-    delta = c.restart().asSeconds();
+    delta = delta_clock.restart().asSeconds();
 
     Vector2i mouse_pos = Mouse::getPosition(win);
     Vector2i win_size = Vector2i(win.getSize());
@@ -329,7 +329,14 @@ int main(int argc, char* argv[]) {
 inline void setupLuaState(sol::state& lua) {
   lua.open_libraries();
   lua.set_function("log", static_cast<void (*)(int, std::string)>(log));
-  lua.new_usertype<Song>("Song", "bpm", &Song::bpm, "gap", &Song::gap, "tracks", &Song::note_tracks);
+  lua.new_usertype<Song>("Song",
+      "bpm", &Song::bpm,
+      "gap", &Song::gap,
+      "medley_start", &Song::medley_start,
+      "medley_end", &Song::medley_end,
+      "tags", &Song::tags,
+      "tracks", &Song::note_tracks
+      );
   lua.new_usertype<Note>("Note",
       sol::constructors<Note(Note::Type, int, int, int, std::string)>(),
       "type", &Note::type,
