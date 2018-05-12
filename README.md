@@ -1,7 +1,7 @@
 # USEdit
 WIP song editor for UltraStar using SFML, audiere and LUA.  
 
-![screenshot](https://i.imgur.com/lGcfGeg.png)
+![screenshot](https://i.imgur.com/z0zrCvL.png)
 
 ## Requirements
 [Audiere 1.9.4](http://audiere.sourceforge.net/download.php)  
