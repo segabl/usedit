@@ -95,6 +95,12 @@ int main(int argc, char* argv[]) {
     list_functions.add(button.get());
   }
 
+  DropdownList list_song(Text("Song", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT), DropdownList::UP, false);
+  bottom_elements.add(&list_song);
+
+  Button button_play_pause(Text("Play/Pause", ResourceManager::font("default"), STATUS_TEXT_SIZE), Vector2f(160, STATUS_HEIGHT));
+  list_song.add(&button_play_pause);
+
   function<void(string)> loadSong = [&](string fname) {
     track_handlers.clear();
     bool loaded = song.loadFromFile(fname);
@@ -110,6 +116,7 @@ int main(int argc, char* argv[]) {
       win.setTitle("USE");
     }
     list_functions.setEnabled(loaded && !function_elements.empty());
+    list_song.setEnabled(true);
     button_save.setEnabled(loaded);
     button_reload.setEnabled(loaded);
   };
@@ -134,6 +141,14 @@ int main(int argc, char* argv[]) {
 
   button_quit.onMouseLeftReleased().connect([&]() {
     win.close();
+  });
+
+  button_play_pause.onMouseLeftReleased().connect([&]() {
+    if (song.isPlaying()) {
+      song.pause();
+    } else {
+      song.play();
+    }
   });
 
   if (argc > 1) {
